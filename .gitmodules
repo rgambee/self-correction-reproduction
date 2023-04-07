@@ -1,3 +1,6 @@
 [submodule "datasets/BBQ"]
 	path = datasets/BBQ
 	url = https://github.com/nyu-mll/BBQ.git
+[submodule "datasets/winogender-schemas"]
+	path = datasets/winogender-schemas
+	url = https://github.com/rudinger/winogender-schemas.git
