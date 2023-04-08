@@ -8,3 +8,7 @@ jsonlines = "~=3.1"
 openai = "~=0.27"
 
 [dev-packages]
+black = "~=23.3"
+isort = {version = "~=5.12", extras = ["colors"]}
+mypy = "~=1.2"
+pylint = "~=2.17"
