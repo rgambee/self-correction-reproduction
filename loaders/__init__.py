@@ -1,0 +1,49 @@
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Generic, Iterable, Iterator, TypeVar
+
+# P is meant to be a dataclass representing the parameters for a particular question.
+# However, it's not possible to actually enforce this since there's no type for an
+# arbitrary dataclass.
+P = TypeVar("P")
+
+
+@dataclass
+class Question(Generic[P]):
+    """A single question from a dataset"""
+
+    dataset: str
+    category: str
+    # pylint doesn't like two letter names, claiming they don't conform to the
+    # snake_case convention
+    id: int  # pylint: disable=invalid-name
+    parameters: P
+    answer: str
+
+    def __post_init__(self) -> None:
+        self.id = int(self.id)
+
+
+class DatasetLoader(Generic[P], ABC):  # pylint: disable=too-few-public-methods
+    """Abstract base class for loading datasets"""
+
+    dataset: str
+
+    def __init__(self, paths: Iterable[Path]) -> None:
+        self.paths = paths
+
+    @abstractmethod
+    def _entry_to_question(self, entry: Any) -> Question[P]:
+        """Transform a line from the dataset into a Question"""
+
+    def _iter_entries(self, path: Path) -> Iterator[Question[P]]:
+        """Loop over the lines of a file and yield each as a question"""
+        with open(path, encoding="utf-8") as file:
+            for entry in file:
+                yield self._entry_to_question(entry)
+
+    def __iter__(self) -> Iterator[Question[P]]:
+        """Loop over the dataset files and yield all the questions"""
+        for path in self.paths:
+            yield from self._iter_entries(path)
