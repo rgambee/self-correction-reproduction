@@ -1,7 +1,17 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Generic, Iterable, Iterator, Sequence, TypeVar, Union, cast
+from typing import (
+    Any,
+    Generic,
+    Iterable,
+    Iterator,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+)
 
 # P is meant to be a dataclass representing the parameters for a particular question.
 # However, it's not possible to actually enforce this since there's no type for an
@@ -42,14 +52,17 @@ class DatasetLoader(Generic[P], ABC):
             self.paths = cast(Iterable[Path], paths)
 
     @abstractmethod
-    def _entry_to_question(self, entry: Any) -> Question[P]:
+    def _entry_to_question(self, entry: Any) -> Optional[Question[P]]:
         """Transform a line from the dataset into a Question"""
 
     def _iter_entries(self, path: Path) -> Iterator[Question[P]]:
         """Loop over the lines of a file and yield each as a question"""
         with open(path, encoding="utf-8") as file:
             for entry in file:
-                yield self._entry_to_question(entry)
+                question = self._entry_to_question(entry)
+                if question is None:
+                    continue
+                yield question
 
     def __iter__(self) -> Iterator[Question[P]]:
         """Loop over the dataset files and yield all the questions"""
