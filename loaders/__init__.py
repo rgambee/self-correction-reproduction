@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Generic, Iterable, Iterator, TypeVar
+from typing import Any, Generic, Iterable, Iterator, TypeVar, Union, cast
 
 # P is meant to be a dataclass representing the parameters for a particular question.
 # However, it's not possible to actually enforce this since there's no type for an
@@ -30,8 +30,15 @@ class DatasetLoader(Generic[P], ABC):  # pylint: disable=too-few-public-methods
 
     dataset: str
 
-    def __init__(self, paths: Iterable[Path]) -> None:
-        self.paths = paths
+    def __init__(self, paths: Union[Path, Iterable[Path]]) -> None:
+        # If paths is a single Path, wrap it in a list so we can iterate over it.
+        # mypy isn't thrilled about this, hence the various `type:` comments.
+        try:
+            iter(paths)  # type: ignore[arg-type]
+        except TypeError:
+            self.paths: Iterable[Path] = [cast(Path, paths)]
+        else:
+            self.paths = cast(Iterable[Path], paths)
 
     @abstractmethod
     def _entry_to_question(self, entry: Any) -> Question[P]:
