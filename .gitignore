@@ -1,3 +1,7 @@
 .DS_Store
 
 *.py[cod]
+
+# Ignore data files
+*.jsonl
+*.csv
