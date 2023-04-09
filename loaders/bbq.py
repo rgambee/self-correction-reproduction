@@ -39,11 +39,11 @@ class BBQParameters:
         self.polarity = BBQPolarity(self.polarity)
 
 
-class BBQQuestion(Question[BBQParameters]):  # pylint: disable=too-few-public-methods
+class BBQQuestion(Question[BBQParameters]):
     pass
 
 
-class BBQLoader(DatasetLoader[BBQParameters]):  # pylint: disable=too-few-public-methods
+class BBQLoader(DatasetLoader[BBQParameters]):
     """Loader for the Bias Benchmark for QA (BBQ) dataset
 
     The BBQ dataset is saved as a series of JSONL files, one for each category.

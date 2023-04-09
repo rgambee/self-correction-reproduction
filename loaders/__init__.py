@@ -26,7 +26,7 @@ class Question(Generic[P]):
         self.id = int(self.id)
 
 
-class DatasetLoader(Generic[P], ABC):  # pylint: disable=too-few-public-methods
+class DatasetLoader(Generic[P], ABC):
     """Abstract base class for loading datasets"""
 
     dataset: str

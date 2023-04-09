@@ -36,6 +36,10 @@ docstring-min-length = 10
 # test fails.
 no-docstring-rgx = "^_|^Test"
 
+[tool.pylint.design]
+# Minimum number of public methods for a class
+min-public-methods = 0
+
 [tool.pylint.format]
 # Maximum number of characters on a single line. 88 is black's default.
 max-line-length = 88

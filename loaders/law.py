@@ -38,11 +38,11 @@ class LawParameters:  # pylint: disable=too-many-instance-attributes
         self.first_pf = float(self.first_pf)
 
 
-class LawQuestion(Question[LawParameters]):  # pylint: disable=too-few-public-methods
+class LawQuestion(Question[LawParameters]):
     pass
 
 
-class LawLoader(DatasetLoader[LawParameters]):  # pylint: disable=too-few-public-methods
+class LawLoader(DatasetLoader[LawParameters]):
     """Loader for the law school dataset
 
     The law school dataset is a CSV file with columns matching the fields in
