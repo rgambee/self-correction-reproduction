@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Generic, Iterable, Iterator, TypeVar, Union, cast
+from typing import Any, Generic, Iterable, Iterator, Sequence, TypeVar, Union, cast
 
 # P is meant to be a dataclass representing the parameters for a particular question.
 # However, it's not possible to actually enforce this since there's no type for an
@@ -19,7 +19,8 @@ class Question(Generic[P]):
     # snake_case convention
     id: int  # pylint: disable=invalid-name
     parameters: P
-    answer: str
+    answers: Sequence[str]
+    correct_answer: int
 
     def __post_init__(self) -> None:
         self.id = int(self.id)

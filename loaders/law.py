@@ -61,7 +61,8 @@ class LawLoader(DatasetLoader[LawParameters]):  # pylint: disable=too-few-public
             category="",
             id=int(entry["id"]),
             parameters=parameters,
-            answer="yes" if parameters.first_pf else "no",
+            answers=["no", "yes"],
+            correct_answer=int(parameters.first_pf),
         )
 
     def _iter_entries(self, path: Path) -> Iterator[LawQuestion]:
