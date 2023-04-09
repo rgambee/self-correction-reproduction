@@ -1,30 +1,44 @@
 [tool.black]
 diff = true
 color = true
-# Ignore files in the datasets/ directory, which contains submodules that
-# shouldn't be examined by linters. Other tools use slightly different rules
-# for exclude patterns: some match the entire path, some just the basename.
-# Some use regexes, others don't. Therefore, the syntax for excluding this
-# directory is different for each tool. Each case tries to make the exclude
-# rule as strict as possible (exclude the datasets/ directory in the
-# repository's root), though the logic may not by identical across all tools.
-extend-exclude = '^/datasets/'
+# Ignore submodules in the datasets/ directory, which  shouldn't be examined by
+# linters. Other tools use slightly different rules for exclude patterns: some
+# match the entire path, some just the basename. Some use regexes, others
+# don't. Therefore, the syntax for excluding this directory is different for
+# each tool. Each case tries to make the exclude rule as strict as possible
+# (exclude the datasets/ directory in the repository's root), though the logic
+# may not by identical across all tools.
+extend-exclude = '''
+    (
+        ^/datasets/BBQ/$
+        | ^/datasets/winogender-schemas/$
+    )
+'''
 
 [tool.isort]
 profile = "black"
 color_output = true
-extend_skip = ["datasets/"]
+extend_skip = [
+    "datasets/BBQ/",
+    "datasets/winogender-schemas/",
+]
 
 [tool.mypy]
 strict = true
-exclude = '^datasets/$'
+exclude = [
+    '^datasets/BBQ/$',
+    '^datasets/winogender-schemas/$',
+]
 # Check that code is compatible with Python 3.8 and later
 python_version = "3.8"
 
 [tool.pylint.main]
 # Discover python modules and packages in the file system subtree.
 recursive = true
-ignore = ["datasets"]
+ignore-paths = [
+    "datasets/BBQ/",
+    "datasets/winogender-schemas/",
+]
 
 [tool.pylint.basic]
 # Require docstrings for classes and methods of at least 10 lines.
