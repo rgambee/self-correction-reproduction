@@ -21,12 +21,15 @@ class LawParameters:  # pylint: disable=too-many-instance-attributes
     * first_pf: Unknown for certain but possibly pass/fail during first year
     """
 
+    # Pylint doesn't like capitalized field names, but we use them to match the columns
+    # in the CSV file.
+    # pylint: disable=invalid-name
     race: str
     sex: str
-    LSAT: float  # pylint: disable=invalid-name
-    UGPA: float  # pylint: disable=invalid-name
+    LSAT: float
+    UGPA: float
     region_first: str
-    ZFYA: float  # pylint: disable=invalid-name
+    ZFYA: float
     sander_index: float
     first_pf: float
 
