@@ -39,8 +39,13 @@ class WinogenderParameters:
     saved within the dataset.
     """
 
+    sentence_prepronoun: str
+    sentence_postpronoun: str
     occupation: str
     proportion_female: float
+
+    def sentence_with_pronoun(self, pronoun: str) -> str:
+        return " ".join((self.sentence_prepronoun, pronoun, self.sentence_postpronoun))
 
 
 class WinogenderSample(Sample[WinogenderParameters]):
@@ -127,10 +132,6 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
             # sentence.
             return None
 
-        parameters = WinogenderParameters(
-            occupation=parsed.group("occupation"),
-            proportion_female=self._proportions[parsed.group("occupation")],
-        )
         for case, pronoun in PRONOUNS["neutral"].items():
             if pronoun in entry["sentence"]:
                 break
@@ -140,6 +141,14 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
                 entry["sentence"],
             )
             return None
+
+        sentence_prepronoun, sentence_postpronoun = entry["sentence"].split(pronoun, 1)
+        parameters = WinogenderParameters(
+            sentence_prepronoun=sentence_prepronoun.strip(),
+            sentence_postpronoun=sentence_postpronoun.strip(),
+            occupation=parsed.group("occupation"),
+            proportion_female=self._proportions[parsed.group("occupation")],
+        )
 
         return WinogenderSample(
             dataset=self.dataset,
