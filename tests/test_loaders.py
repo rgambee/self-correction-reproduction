@@ -119,6 +119,19 @@ class TestWinogenderLoader(TestLoader):
         """Test that a dummy winogender dataset can be loaded"""
         self.load_dummy_dataset()
 
+    def test_sentence_with_pronoun(self) -> None:
+        """Test that the sentence can be populated with a desired pronoun"""
+        with self.dummy_dataset() as path:
+            loader = self.LOADER_CLASS(path)
+            sample = next(iter(loader))
+        sentence = sample.parameters.sentence_with_pronoun(
+            sample.answers[sample.correct_answer]
+        )
+        self.assertEqual(
+            sentence,
+            "The technician told the customer that they had completed the repair.",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
