@@ -3,14 +3,22 @@ from dataclasses import asdict
 from functools import singledispatch
 
 from loaders import Question
+from loaders.bbq import BBQQuestion
 from loaders.law import LawQuestion
 
-from . import law
+from . import bbq, law
 
 
 @singledispatch
 def format_preamble(question: Question) -> str:
     raise TypeError(f"Unsupported question type: {type(question)}")
+
+
+@format_preamble.register
+def _format_preamble_bbq(question: BBQQuestion) -> str:
+    kwargs = asdict(question)
+    kwargs.update(asdict(question.parameters))
+    return bbq.PREAMBLE.format(**kwargs)
 
 
 @format_preamble.register
@@ -22,6 +30,11 @@ def _format_preamble_law(question: LawQuestion) -> str:
 def prompt_question(question: Question) -> str:
     """Generate a prompt following the basic question format"""
     raise TypeError(f"Unsupported question type: {type(question)}")
+
+
+@prompt_question.register
+def _prompt_question_bbq(question: BBQQuestion) -> str:
+    return _prompt_question(question, bbq.POSTAMBLE)
 
 
 @prompt_question.register
@@ -45,6 +58,15 @@ def _prompt_question(question: Question, postamble: str) -> str:
 def prompt_instruction_following(question: Question) -> str:
     """Generate a prompt following the Question + Instruction Following format"""
     raise TypeError(f"Unsupported question type: {type(question)}")
+
+
+@prompt_instruction_following.register
+def _prompt_instruction_following_bbq(question: BBQQuestion) -> str:
+    return _prompt_instruction_following(
+        question,
+        bbq.DEBIAS_INSTRUCTIONS,
+        bbq.POSTAMBLE,
+    )
 
 
 @prompt_instruction_following.register
@@ -82,6 +104,11 @@ def prompt_chain_of_thought_a(question: Question) -> str:
 
 
 @prompt_chain_of_thought_a.register
+def _prompt_chain_of_thought_a_bbq(question: BBQQuestion) -> str:
+    return _prompt_chain_of_thought_a(question, bbq.CHAIN_OF_THOUGHT)
+
+
+@prompt_chain_of_thought_a.register
 def _prompt_chain_of_thought_a_law(question: LawQuestion) -> str:
     return _prompt_chain_of_thought_a(question, law.CHAIN_OF_THOUGHT)
 
@@ -102,6 +129,16 @@ def _prompt_chain_of_thought_a(question: Question, chain_of_thought: str) -> str
 def prompt_chain_of_thought_b(question: Question, model_reasoning: str) -> str:
     """Generate a prompt that incorporates the model's chain-of-thought reasoning"""
     raise TypeError(f"Unsupported question type: {type(question)}")
+
+
+@prompt_chain_of_thought_b.register
+def _prompt_chain_of_thought_b_bbq(question: BBQQuestion, model_reasoning: str) -> str:
+    return _prompt_chain_of_thought_b(
+        question,
+        bbq.CHAIN_OF_THOUGHT,
+        model_reasoning,
+        bbq.POSTAMBLE_COT,
+    )
 
 
 @prompt_chain_of_thought_b.register
