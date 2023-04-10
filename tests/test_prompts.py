@@ -32,7 +32,10 @@ class TestBBQPrompts(unittest.TestCase):
 
     @property
     def preamble(self) -> str:
-        return cast(str, getattr(self.PROMPT_MODULE, "PREAMBLE"))
+        format_string = cast(str, getattr(self.PROMPT_MODULE, "PREAMBLE"))
+        kwargs = asdict(self.SAMPLE)
+        kwargs.update(asdict(self.SAMPLE.parameters))
+        return format_string.format(**kwargs)
 
     @property
     def debias_instructions(self) -> str:
@@ -73,6 +76,7 @@ class TestBBQPrompts(unittest.TestCase):
         """Test that the plain question prompt contains the expected text"""
         prompt = prompts.prompt_question(self.SAMPLE)
         self.check_whitespace(prompt)
+        self.assertIn(self.preamble, prompt)
         self.assertNotIn(self.debias_instructions, prompt)
         self.assertNotIn(self.chain_of_thought, prompt)
         self.assertIn(self.postamble, prompt)
@@ -82,6 +86,7 @@ class TestBBQPrompts(unittest.TestCase):
         """Test that the instruction-following prompt contains the expected text"""
         prompt = prompts.prompt_instruction_following(self.SAMPLE)
         self.check_whitespace(prompt)
+        self.assertIn(self.preamble, prompt)
         self.assertIn(self.debias_instructions, prompt)
         self.assertNotIn(self.chain_of_thought, prompt)
         self.assertIn(self.postamble, prompt)
@@ -91,6 +96,7 @@ class TestBBQPrompts(unittest.TestCase):
         """Test that the chain-of-thought prompt contains the expected text"""
         prompt = prompts.prompt_chain_of_thought_a(self.SAMPLE)
         self.check_whitespace(prompt)
+        self.assertIn(self.preamble, prompt)
         self.assertNotIn(self.debias_instructions, prompt)
         self.assertIn(self.chain_of_thought, prompt)
         self.assertNotIn(self.postamble, prompt)
@@ -99,6 +105,7 @@ class TestBBQPrompts(unittest.TestCase):
         reasoning = "I should answer this question correctly."
         prompt = prompts.prompt_chain_of_thought_b(self.SAMPLE, reasoning)
         self.check_whitespace(prompt)
+        self.assertIn(self.preamble, prompt)
         self.assertNotIn(self.debias_instructions, prompt)
         self.assertIn(self.chain_of_thought, prompt)
         self.assertNotIn(self.postamble, prompt)
@@ -172,6 +179,7 @@ class TestWinogenderPrompts(TestBBQPrompts):
         """Test that the plain question prompt contains the expected text"""
         prompt = prompts.prompt_question(self.SAMPLE)
         self.check_whitespace(prompt)
+        self.assertIn(self.preamble, prompt)
         self.assertNotIn(self.debias_instructions, prompt)
         self.assertNotIn(self.chain_of_thought, prompt)
         self.assertIn(self.postamble, prompt)
@@ -180,6 +188,7 @@ class TestWinogenderPrompts(TestBBQPrompts):
         """Test that the instruction-following prompt contains the expected text"""
         prompt = prompts.prompt_instruction_following(self.SAMPLE)
         self.check_whitespace(prompt)
+        self.assertIn(self.preamble, prompt)
         self.assertIn(self.debias_instructions, prompt)
         self.assertNotIn(self.chain_of_thought, prompt)
         self.assertIn(self.postamble, prompt)
@@ -188,6 +197,7 @@ class TestWinogenderPrompts(TestBBQPrompts):
         """Test that the chain-of-thought prompt contains the expected text"""
         prompt = prompts.prompt_chain_of_thought_a(self.SAMPLE)
         self.check_whitespace(prompt)
+        self.assertIn(self.preamble, prompt)
         self.assertNotIn(self.debias_instructions, prompt)
         self.assertIn(self.chain_of_thought, prompt)
 
