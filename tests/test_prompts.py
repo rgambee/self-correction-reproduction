@@ -3,15 +3,15 @@ import unittest
 from typing import cast
 
 import prompts
-from loaders import Question
-from loaders.bbq import BBQContextCondition, BBQParameters, BBQPolarity, BBQQuestion
-from loaders.law import LawParameters, LawQuestion
+from loaders import Sample
+from loaders.bbq import BBQContextCondition, BBQParameters, BBQPolarity, BBQSample
+from loaders.law import LawParameters, LawSample
 from prompts import bbq, law
 
 
 class TestBBQPrompts(unittest.TestCase):
     PROMPT_MODULE = bbq
-    SAMPLE_QUESTION: Question = BBQQuestion(  # type: ignore[type-arg]
+    SAMPLE: Sample = BBQSample(  # type: ignore[type-arg]
         dataset="bbq",
         category="Age",
         id=0,
@@ -55,12 +55,12 @@ class TestBBQPrompts(unittest.TestCase):
         self.assertNotIn(text[-1], string.whitespace)
 
     def check_preamble_contents(self, preamble: str) -> None:
-        self.assertIn(self.SAMPLE_QUESTION.parameters.context, preamble)
-        self.assertIn(self.SAMPLE_QUESTION.parameters.question, preamble)
+        self.assertIn(self.SAMPLE.parameters.context, preamble)
+        self.assertIn(self.SAMPLE.parameters.question, preamble)
 
     def test_preamble(self) -> None:
         """Test that the preamble is formatted correctly"""
-        preamble = prompts.format_preamble(self.SAMPLE_QUESTION)
+        preamble = prompts.format_preamble(self.SAMPLE)
         # The preamble shouldn't have any leading or trailing whitespace
         self.assertEqual(preamble, preamble.strip())
         # Condense to one line to make is easier to search for a substring
@@ -69,7 +69,7 @@ class TestBBQPrompts(unittest.TestCase):
 
     def test_question(self) -> None:
         """Test that the plain question prompt contains the expected text"""
-        prompt = prompts.prompt_question(self.SAMPLE_QUESTION)
+        prompt = prompts.prompt_question(self.SAMPLE)
         self.check_whitespace(prompt)
         self.assertNotIn(self.debias_instructions, prompt)
         self.assertNotIn(self.chain_of_thought, prompt)
@@ -78,7 +78,7 @@ class TestBBQPrompts(unittest.TestCase):
 
     def test_instruction_following(self) -> None:
         """Test that the instruction-following prompt contains the expected text"""
-        prompt = prompts.prompt_instruction_following(self.SAMPLE_QUESTION)
+        prompt = prompts.prompt_instruction_following(self.SAMPLE)
         self.check_whitespace(prompt)
         self.assertIn(self.debias_instructions, prompt)
         self.assertNotIn(self.chain_of_thought, prompt)
@@ -87,7 +87,7 @@ class TestBBQPrompts(unittest.TestCase):
 
     def test_chain_of_thought(self) -> None:
         """Test that the chain-of-thought prompt contains the expected text"""
-        prompt = prompts.prompt_chain_of_thought_a(self.SAMPLE_QUESTION)
+        prompt = prompts.prompt_chain_of_thought_a(self.SAMPLE)
         self.check_whitespace(prompt)
         self.assertNotIn(self.debias_instructions, prompt)
         self.assertIn(self.chain_of_thought, prompt)
@@ -95,7 +95,7 @@ class TestBBQPrompts(unittest.TestCase):
         self.assertNotIn(self.postamble_cot, prompt)
 
         reasoning = "I should answer this question correctly."
-        prompt = prompts.prompt_chain_of_thought_b(self.SAMPLE_QUESTION, reasoning)
+        prompt = prompts.prompt_chain_of_thought_b(self.SAMPLE, reasoning)
         self.check_whitespace(prompt)
         self.assertNotIn(self.debias_instructions, prompt)
         self.assertIn(self.chain_of_thought, prompt)
@@ -106,7 +106,7 @@ class TestBBQPrompts(unittest.TestCase):
 
 class TestLawPrompts(TestBBQPrompts):
     PROMPT_MODULE = law
-    SAMPLE_QUESTION = LawQuestion(
+    SAMPLE = LawSample(
         dataset="law",
         category="",
         id=0,

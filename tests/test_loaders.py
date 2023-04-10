@@ -16,7 +16,7 @@ from loaders.winogender import WinogenderLoader
 
 class TestLoader(unittest.TestCase):
     DUMMY_DATA: Sequence[str]
-    EXPECTED_QUESTIONS: int
+    EXPECTED_SAMPLES: int
     LOADER_CLASS: Type[DatasetLoader]  # type: ignore[type-arg]
 
     @contextmanager
@@ -37,10 +37,10 @@ class TestLoader(unittest.TestCase):
         """Test that an abbreviated version of the dataset can be loaded"""
         with self.dummy_dataset() as path:
             loader = self.LOADER_CLASS(path)
-            question_count = 0
+            sample_count = 0
             for _ in loader:
-                question_count += 1
-            self.assertEqual(question_count, self.EXPECTED_QUESTIONS)
+                sample_count += 1
+            self.assertEqual(sample_count, self.EXPECTED_SAMPLES)
 
 
 class TestBBQLoader(TestLoader):
@@ -72,7 +72,7 @@ class TestBBQLoader(TestLoader):
             }
         )
     ]
-    EXPECTED_QUESTIONS = len(DUMMY_DATA)
+    EXPECTED_SAMPLES = len(DUMMY_DATA)
     LOADER_CLASS = BBQLoader
 
     def test_load(self) -> None:
@@ -86,7 +86,7 @@ class TestLawLoader(TestLoader):
         "0,White,1,39.0,3.1,GL,-0.98,0.782738095238,1.0\n",
         "1,White,1,36.0,3.0,GL,0.09,0.735714285714,1.0\n",
     ]
-    EXPECTED_QUESTIONS = len(DUMMY_DATA) - 1
+    EXPECTED_SAMPLES = len(DUMMY_DATA) - 1
     LOADER_CLASS = LawLoader
 
     def test_load(self) -> None:
@@ -110,9 +110,9 @@ class TestWinogenderLoader(TestLoader):
         "technician.someone.0.female.txt	The technician told someone that she had completed the repair.\n",
         "technician.someone.0.neutral.txt	The technician told someone that they had completed the repair.\n",
     ]
-    # Only one of the sentences above should be loaded as a question. The others are
+    # Only one of the sentences above should be loaded as a sample. The others are
     # variations we don't care about.
-    EXPECTED_QUESTIONS = 1
+    EXPECTED_SAMPLES = 1
     LOADER_CLASS = WinogenderLoader
 
     def test_load(self) -> None:

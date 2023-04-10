@@ -3,12 +3,12 @@ from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Any, Dict, Iterator
 
-from loaders import DatasetLoader, Question
+from loaders import DatasetLoader, Sample
 
 
 @dataclass
 class LawParameters:  # pylint: disable=too-many-instance-attributes
-    """Parameters for a single question from the Law dataset
+    """Parameters for a single sample from the Law dataset
 
     The fields are as follows:
     * race: Amerindian, Asian, Black, Hispanic, Mexican, Other, Puertorican, or White
@@ -48,7 +48,7 @@ class LawParameters:  # pylint: disable=too-many-instance-attributes
         self.first_pf = float(self.first_pf)
 
 
-class LawQuestion(Question[LawParameters]):
+class LawSample(Sample[LawParameters]):
     pass
 
 
@@ -61,12 +61,12 @@ class LawLoader(DatasetLoader[LawParameters]):
 
     dataset = "law"
 
-    def _entry_to_question(self, entry: Dict[str, Any]) -> LawQuestion:
-        """Transform a line from the law school dataset into a Question"""
+    def _entry_to_sample(self, entry: Dict[str, Any]) -> LawSample:
+        """Transform a line from the law school dataset into a Sample"""
         param_dict = dict(entry)
         param_dict.pop("id")
         parameters = LawParameters(**param_dict)
-        return LawQuestion(
+        return LawSample(
             dataset=self.dataset,
             category="",
             id=int(entry["id"]),
@@ -75,8 +75,8 @@ class LawLoader(DatasetLoader[LawParameters]):
             correct_answer=int(parameters.first_pf),
         )
 
-    def _iter_entries(self, path: Path) -> Iterator[LawQuestion]:
-        """Loop over the lines of a CSV file and yield each as a question"""
+    def _iter_entries(self, path: Path) -> Iterator[LawSample]:
+        """Loop over the lines of a CSV file and yield each as a sample"""
         with open(path, encoding="utf-8") as file:
             reader = csv.DictReader(
                 file,
@@ -86,4 +86,4 @@ class LawLoader(DatasetLoader[LawParameters]):
                 if i == 0 and entry["id"] == "":
                     # Skip header
                     continue
-                yield self._entry_to_question(entry)
+                yield self._entry_to_sample(entry)

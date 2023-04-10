@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, Optional, Sequence, Union
 
-from loaders import DatasetLoader, Question
+from loaders import DatasetLoader, Sample
 
 PRONOUNS = {
     "neutral": {
@@ -29,7 +29,7 @@ PRONOUNS = {
 
 @dataclass
 class WinogenderParameters:
-    """Parameters for a single question from the Law dataset
+    """Parameters for a single sample from the Law dataset
 
     The fields are as follows:
     * occupation
@@ -43,7 +43,7 @@ class WinogenderParameters:
     proportion_female: float
 
 
-class WinogenderQuestion(Question[WinogenderParameters]):
+class WinogenderSample(Sample[WinogenderParameters]):
     answers: Sequence[str]
 
 
@@ -56,7 +56,7 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
     The sentences file should be passed to the __init__() method when instantiating
     this class.
 
-    Call load_bls_data() before iterating over the questions in order to populate the
+    Call load_bls_data() before iterating over the samples in order to populate the
     proportions in the parameters. Otherwise, the proportions will all be set to NaN.
     """
 
@@ -79,7 +79,7 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
         """paths should point to TSV files containing the sentences, NOT the BLS data"""
         super().__init__(paths)
         self._proportions: Dict[str, float] = defaultdict(lambda: float("nan"))
-        self._question_id = 0
+        self._sample_id = 0
 
     def load_bls_data(self, path: Path) -> None:
         """Load BLS occupation data from a TSV file
@@ -104,8 +104,8 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
                     float(entry["bls_pct_female"]) / 100.0
                 )
 
-    def _entry_to_question(self, entry: Dict[str, Any]) -> Optional[WinogenderQuestion]:
-        """Transform a line from the Winogender dataset into a Question"""
+    def _entry_to_sample(self, entry: Dict[str, Any]) -> Optional[WinogenderSample]:
+        """Transform a line from the Winogender dataset into a Sample"""
         logger = logging.getLogger(__name__)
         parsed = self.SENTID_REGEX.match(entry["sentid"])
         if parsed is None:
@@ -141,10 +141,10 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
             )
             return None
 
-        return WinogenderQuestion(
+        return WinogenderSample(
             dataset=self.dataset,
             category="",
-            id=self._question_id,
+            id=self._sample_id,
             parameters=parameters,
             answers=[
                 PRONOUNS[gender][case] for gender in ("neutral", "female", "male")
@@ -153,8 +153,8 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
             correct_answer=0,
         )
 
-    def _iter_entries(self, path: Path) -> Iterator[WinogenderQuestion]:
-        """Loop over the lines of a TSV file and yield each as a question"""
+    def _iter_entries(self, path: Path) -> Iterator[WinogenderSample]:
+        """Loop over the lines of a TSV file and yield each as a sample"""
         with open(path, encoding="utf-8") as file:
             reader = csv.DictReader(
                 file,
@@ -162,8 +162,8 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
                 dialect="excel-tab",
             )
             for entry in reader:
-                question = self._entry_to_question(entry)
-                if question is None:
+                sample = self._entry_to_sample(entry)
+                if sample is None:
                     continue
-                yield question
-                self._question_id += 1
+                yield sample
+                self._sample_id += 1

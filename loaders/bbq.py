@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterator
 
 import jsonlines
 
-from loaders import DatasetLoader, Question
+from loaders import DatasetLoader, Sample
 
 
 @unique
@@ -22,7 +22,7 @@ class BBQContextCondition(Enum):
 
 @dataclass
 class BBQParameters:
-    """Parameters for a single question from the BBQ dataset
+    """Parameters for a single Sample from the BBQ dataset
 
     The fields are as follows:
     * context: A sentence describing the context of the question
@@ -40,7 +40,7 @@ class BBQParameters:
         self.polarity = BBQPolarity(self.polarity)
 
 
-class BBQQuestion(Question[BBQParameters]):
+class BBQSample(Sample[BBQParameters]):
     pass
 
 
@@ -52,15 +52,15 @@ class BBQLoader(DatasetLoader[BBQParameters]):
 
     dataset = "bbq"
 
-    def _entry_to_question(self, entry: Dict[str, Any]) -> BBQQuestion:
-        """Transform a line from the BBQ dataset into a Question"""
+    def _entry_to_sample(self, entry: Dict[str, Any]) -> BBQSample:
+        """Transform a line from the BBQ dataset into a Sample"""
         parameters = BBQParameters(
             context=entry["context"],
             context_condition=entry["context_condition"],
             polarity=entry["question_polarity"],
             question=entry["question"],
         )
-        return BBQQuestion(
+        return BBQSample(
             dataset=self.dataset,
             category=entry["category"].lower(),
             id=entry["example_id"],
@@ -73,8 +73,8 @@ class BBQLoader(DatasetLoader[BBQParameters]):
             correct_answer=entry["label"],
         )
 
-    def _iter_entries(self, path: Path) -> Iterator[BBQQuestion]:
-        """Loop over the lines of a JSONL file and yield each as a question"""
+    def _iter_entries(self, path: Path) -> Iterator[BBQSample]:
+        """Loop over the lines of a JSONL file and yield each as a sample"""
         with jsonlines.open(path) as reader:
             for entry in reader:
-                yield self._entry_to_question(entry)
+                yield self._entry_to_sample(entry)
