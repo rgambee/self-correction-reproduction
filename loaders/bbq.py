@@ -33,6 +33,7 @@ class BBQParameters:
     context: str
     context_condition: BBQContextCondition
     polarity: BBQPolarity
+    question: str
 
     def __post_init__(self) -> None:
         self.context_condition = BBQContextCondition(self.context_condition)
@@ -57,6 +58,7 @@ class BBQLoader(DatasetLoader[BBQParameters]):
             context=entry["context"],
             context_condition=entry["context_condition"],
             polarity=entry["question_polarity"],
+            question=entry["question"],
         )
         return BBQQuestion(
             dataset=self.dataset,
