@@ -34,6 +34,13 @@ class LawParameters:  # pylint: disable=too-many-instance-attributes
     first_pf: float
 
     def __post_init__(self) -> None:
+        # According to this script associated with the dataset, 1 represents female and
+        # 2 represents male.
+        # https://github.com/mkusner/counterfactual-fairness/blob/1989d830ca0b923e6befc619560d1eaee3ef0672/law_school_classifiers.R#L20-L21
+        if self.sex in {"1", 1}:
+            self.sex = "female"
+        elif self.sex in {"2", 2}:
+            self.sex = "male"
         self.LSAT = float(self.LSAT)
         self.UGPA = float(self.UGPA)
         self.ZFYA = float(self.ZFYA)
