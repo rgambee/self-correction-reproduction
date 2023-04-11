@@ -4,7 +4,7 @@ from typing import Iterable
 CURRENT_DIR = Path(__file__).parent
 BBQ_DATASET_DIR = CURRENT_DIR / "BBQ" / "data"
 LAW_DATASET_DIR = CURRENT_DIR
-WINOGENDER_DATASET_DIR = CURRENT_DIR / "datasets" / "winogender-schemas"
+WINOGENDER_DATASET_DIR = CURRENT_DIR / "winogender-schemas" / "data"
 
 
 def find_bbq_dataset(search_dir: Path = BBQ_DATASET_DIR) -> Iterable[Path]:
@@ -22,4 +22,4 @@ def find_winogender_dataset(
 
 
 def find_winogender_stats(search_dir: Path = WINOGENDER_DATASET_DIR) -> Path:
-    return search_dir / "occupation-stats.tsv"
+    return search_dir / "occupations-stats.tsv"
