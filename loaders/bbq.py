@@ -10,8 +10,8 @@ from loaders import DatasetLoader, Sample
 
 @unique
 class BBQPolarity(Enum):
-    POSITIVE = "pos"
     NEGATIVE = "neg"
+    NONNEGATIVE = "nonneg"
 
 
 @unique
