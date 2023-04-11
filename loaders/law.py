@@ -1,7 +1,7 @@
 import csv
 from dataclasses import dataclass, fields
 from pathlib import Path
-from typing import Any, Dict, Iterator
+from typing import Any, Iterator, Mapping
 
 from loaders import DatasetLoader, Sample
 
@@ -61,7 +61,7 @@ class LawLoader(DatasetLoader[LawParameters]):
 
     dataset = "law"
 
-    def _entry_to_sample(self, entry: Dict[str, Any]) -> LawSample:
+    def _entry_to_sample(self, entry: Mapping[str, Any]) -> LawSample:
         """Transform a line from the law school dataset into a Sample"""
         param_dict = dict(entry)
         param_dict.pop("id")

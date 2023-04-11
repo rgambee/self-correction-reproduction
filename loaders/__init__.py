@@ -6,6 +6,7 @@ from typing import (
     Generic,
     Iterable,
     Iterator,
+    Mapping,
     Optional,
     Sequence,
     TypeVar,
@@ -52,7 +53,7 @@ class DatasetLoader(Generic[P], ABC):
             self.paths = cast(Iterable[Path], paths)
 
     @abstractmethod
-    def _entry_to_sample(self, entry: Any) -> Optional[Sample[P]]:
+    def _entry_to_sample(self, entry: Mapping[str, Any]) -> Optional[Sample[P]]:
         """Transform a line from the dataset into a Sample"""
 
     @abstractmethod

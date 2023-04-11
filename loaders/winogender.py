@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, Iterator, Mapping, Optional, Sequence, Union
 
 from loaders import DatasetLoader, Sample
 
@@ -109,7 +109,7 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
                     float(entry["bls_pct_female"]) / 100.0
                 )
 
-    def _entry_to_sample(self, entry: Dict[str, Any]) -> Optional[WinogenderSample]:
+    def _entry_to_sample(self, entry: Mapping[str, Any]) -> Optional[WinogenderSample]:
         """Transform a line from the Winogender dataset into a Sample"""
         logger = logging.getLogger(__name__)
         parsed = self.SENTID_REGEX.match(entry["sentid"])

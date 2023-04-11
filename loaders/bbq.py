@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum, unique
 from pathlib import Path
-from typing import Any, Dict, Iterator
+from typing import Any, Iterator, Mapping
 
 import jsonlines
 
@@ -52,7 +52,7 @@ class BBQLoader(DatasetLoader[BBQParameters]):
 
     dataset = "bbq"
 
-    def _entry_to_sample(self, entry: Dict[str, Any]) -> BBQSample:
+    def _entry_to_sample(self, entry: Mapping[str, Any]) -> BBQSample:
         """Transform a line from the BBQ dataset into a Sample"""
         parameters = BBQParameters(
             context=entry["context"],
