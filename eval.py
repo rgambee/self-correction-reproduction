@@ -14,8 +14,8 @@ class Completion:
 
     text: str
     index: int
-    logprobs: Dict[str, float]
     finish_reason: str
+    logprobs: Optional[Dict[str, float]] = None
 
 
 @dataclass
