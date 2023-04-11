@@ -60,6 +60,27 @@ class DatasetLoader(Generic[P], ABC):
     def _iter_entries(self, path: Path) -> Iterator[Sample[P]]:
         """Loop over the lines of a file and yield each as a sample"""
 
+    @staticmethod
+    def _filter_csv_rows(
+        reader: Iterable[Mapping[str, Any]],
+    ) -> Iterable[Mapping[str, Any]]:
+        """Special treatment for CSV (or similar) files
+
+        This skips headers and blank lines, which the built-in CSV library doesn't
+        handle well on its own.
+        """
+        for i, entry in enumerate(reader):
+            # Skip header. I'd prefer to use all() rather than any() for this check.
+            # However, the id column in the law school dataset is unlabeled, so it would
+            # fail the check if we used all(). Requiring the line number to be 0 should
+            # eliminate nearly all false positive from the loser entry check.
+            if i == 0 and any(k == v for k, v in entry.items()):
+                continue
+            # Skip blank lines
+            if all(v is None for v in entry.values()):
+                continue
+            yield entry
+
     def __iter__(self) -> Iterator[Sample[P]]:
         """Loop over the dataset files and yield all the samples"""
         for path in self.paths:

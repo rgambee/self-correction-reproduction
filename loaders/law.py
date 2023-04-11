@@ -82,11 +82,5 @@ class LawLoader(DatasetLoader[LawParameters]):
                 file,
                 fieldnames=("id",) + tuple(fld.name for fld in fields(LawParameters)),
             )
-            for i, entry in enumerate(reader):
-                if i == 0 and entry["id"] == "":
-                    # Skip header
-                    continue
-                if all(v is None for v in entry.values()):
-                    # Skip blank lines
-                    continue
+            for entry in self._filter_csv_rows(reader):
                 yield self._entry_to_sample(entry)

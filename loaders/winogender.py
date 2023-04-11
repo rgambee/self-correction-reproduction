@@ -105,7 +105,7 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
                 ),
                 dialect="excel-tab",
             )
-            for entry in reader:
+            for entry in self._filter_csv_rows(reader):
                 self._proportions[entry["occupation"]] = (
                     float(entry["bls_pct_female"]) / 100.0
                 )
@@ -171,7 +171,7 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
                 fieldnames=("sentid", "sentence"),
                 dialect="excel-tab",
             )
-            for entry in reader:
+            for entry in self._filter_csv_rows(reader):
                 sample = self._entry_to_sample(entry)
                 if sample is None:
                     continue
