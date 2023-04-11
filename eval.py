@@ -1,11 +1,11 @@
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Callable, Dict, Optional, Sequence
+from typing import Callable, Dict, Iterable, Optional, Sequence
 
 import jsonlines
 import openai
 
-from loaders import DatasetLoader, P, Sample
+from loaders import P, Sample
 
 
 @dataclass
@@ -60,7 +60,7 @@ class Request:
 
 
 def evaluate_dataset(
-    loader: DatasetLoader[P],
+    samples: Iterable[Sample[P]],
     prompt_func: Callable[[Sample[P]], str],
     results_file: Path,
     parameters: RequestParameters,
@@ -76,7 +76,7 @@ def evaluate_dataset(
     last_sample = find_most_recent_sample(results_file)
 
     with jsonlines.open(results_file, mode="a", compact=True) as output:
-        for sample in loader:
+        for sample in samples:
             # If we've already evaluated this sample, skip it
             if last_sample is not None and sample.id <= last_sample:
                 continue
