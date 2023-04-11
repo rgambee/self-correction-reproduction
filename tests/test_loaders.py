@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator, Sequence, Type
 
+import datasets
 from loaders import DatasetLoader
 from loaders.bbq import BBQLoader
 from loaders.law import LawLoader
@@ -70,9 +71,17 @@ class TestBBQLoader(TestLoader):
     EXPECTED_SAMPLES = len(DUMMY_DATA)
     LOADER_CLASS = BBQLoader
 
-    def test_load(self) -> None:
+    def test_dummy_dataset(self) -> None:
         """Test that a dummy BBQ dataset can be loaded"""
         self.load_dummy_dataset()
+
+    def test_real_dataset(self) -> None:
+        """Test that the real BBQ dataset can be loaded"""
+        loader = BBQLoader(datasets.find_bbq_dataset())
+        sample_count = 0
+        for _ in loader:
+            sample_count += 1
+        self.assertEqual(sample_count, 58492)
 
 
 class TestLawLoader(TestLoader):
@@ -84,9 +93,17 @@ class TestLawLoader(TestLoader):
     EXPECTED_SAMPLES = len(DUMMY_DATA) - 1
     LOADER_CLASS = LawLoader
 
-    def test_load(self) -> None:
+    def test_dummy_dataset(self) -> None:
         """Test that a dummy law school dataset can be loaded"""
         self.load_dummy_dataset()
+
+    def test_real_dataset(self) -> None:
+        """Test that the real law school dataset can be loaded"""
+        loader = LawLoader(datasets.find_law_dataset())
+        sample_count = 0
+        for _ in loader:
+            sample_count += 1
+        self.assertEqual(sample_count, 21791)
 
 
 class TestWinogenderLoader(TestLoader):
@@ -110,9 +127,18 @@ class TestWinogenderLoader(TestLoader):
     EXPECTED_SAMPLES = 1
     LOADER_CLASS = WinogenderLoader
 
-    def test_load(self) -> None:
+    def test_dummy_dataset(self) -> None:
         """Test that a dummy winogender dataset can be loaded"""
         self.load_dummy_dataset()
+
+    def test_real_dataset(self) -> None:
+        """Test that the real winogender dataset can be loaded"""
+        loader = self.LOADER_CLASS(datasets.find_winogender_dataset())
+        loader.load_bls_data(datasets.find_winogender_stats())
+        sample_count = 0
+        for _ in loader:
+            sample_count += 1
+        self.assertEqual(sample_count, 60)
 
     def test_sentence_with_pronoun(self) -> None:
         """Test that the sentence can be populated with a desired pronoun"""
