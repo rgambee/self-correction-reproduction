@@ -86,4 +86,7 @@ class LawLoader(DatasetLoader[LawParameters]):
                 if i == 0 and entry["id"] == "":
                     # Skip header
                     continue
+                if all(v is None for v in entry.values()):
+                    # Skip blank lines
+                    continue
                 yield self._entry_to_sample(entry)
