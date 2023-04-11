@@ -1,7 +1,7 @@
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Iterable, Iterator, Optional
 
 
 @contextmanager
@@ -16,3 +16,13 @@ def make_temp_file() -> Iterator[Path]:
     finally:
         if temp_path:
             temp_path.unlink()
+
+
+@contextmanager
+def write_dummy_dataset(entries: Iterable[str]) -> Iterator[Path]:
+    """Write a dummy dataset to a tempfile and yield its path"""
+    with make_temp_file() as temp_path:
+        with open(temp_path, "w", encoding="utf-8") as file:
+            file.writelines(entries)
+        # Close the file before yielding it for Windows compatibility
+        yield temp_path
