@@ -1,6 +1,6 @@
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Sequence
+from typing import Callable, Dict, Optional, Sequence
 
 import jsonlines
 import openai
@@ -104,19 +104,11 @@ def find_most_recent_sample(results_file: Path) -> Optional[int]:
     if not results_file.exists():
         return None
 
-    with jsonlines.open(results_file) as file:
-        last_line: Dict[str, Any] = {}
-        try:
-            for line in file:
-                if line:
-                    last_line = line
-        except jsonlines.InvalidLineError:
-            pass
-
-    if not last_line:
-        return None
-    last_id = last_line.get("sample", {}).get("id", None)
-    try:
-        return int(last_id)
-    except (TypeError, ValueError):
-        return None
+    last_id: Optional[int] = None
+    with jsonlines.open(results_file) as reader:
+        for line in reader.iter(type=dict, skip_invalid=True):
+            try:
+                last_id = int(line.get("sample", {}).get("id", None))
+            except (AttributeError, TypeError, ValueError):
+                pass
+    return last_id
