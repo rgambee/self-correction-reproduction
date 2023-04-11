@@ -55,14 +55,9 @@ class DatasetLoader(Generic[P], ABC):
     def _entry_to_sample(self, entry: Any) -> Optional[Sample[P]]:
         """Transform a line from the dataset into a Sample"""
 
+    @abstractmethod
     def _iter_entries(self, path: Path) -> Iterator[Sample[P]]:
         """Loop over the lines of a file and yield each as a sample"""
-        with open(path, encoding="utf-8") as file:
-            for entry in file:
-                sample = self._entry_to_sample(entry)
-                if sample is None:
-                    continue
-                yield sample
 
     def __iter__(self) -> Iterator[Sample[P]]:
         """Loop over the dataset files and yield all the samples"""
