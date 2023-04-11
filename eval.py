@@ -1,6 +1,9 @@
-from dataclasses import asdict, dataclass
+import json
+from dataclasses import asdict, dataclass, is_dataclass
+from enum import Enum
+from functools import partial
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Optional, Sequence
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence
 
 import jsonlines
 import openai
@@ -75,7 +78,11 @@ def evaluate_dataset(
     # Check the results file to see if we've already evaluated some of the samples
     last_sample = find_most_recent_sample(results_file)
 
-    with jsonlines.open(results_file, mode="a", compact=True) as output:
+    with jsonlines.open(
+        results_file,
+        mode="a",
+        dumps=partial(json.dumps, default=to_json_serializable_type),
+    ) as output:
         for sample in samples:
             # If we've already evaluated this sample, skip it
             if last_sample is not None and sample.id <= last_sample:
@@ -84,12 +91,7 @@ def evaluate_dataset(
             prompt = prompt_func(sample)
             request = Request(parameters=parameters, prompt=prompt)
             reply = request.submit()
-            output.write(
-                {
-                    "sample": asdict(sample),
-                    "reply": asdict(reply),
-                },
-            )
+            output.write({"sample": sample, "reply": reply})
 
 
 def find_most_recent_sample(results_file: Path) -> Optional[int]:
@@ -112,3 +114,12 @@ def find_most_recent_sample(results_file: Path) -> Optional[int]:
             except (AttributeError, TypeError, ValueError):
                 pass
     return last_id
+
+
+def to_json_serializable_type(value: Any) -> Any:
+    """Convert a value to a JSON-serializable type"""
+    if is_dataclass(value):
+        return asdict(value)
+    if isinstance(value, Enum):
+        return value.value
+    raise TypeError(f"Object of type {type(value)} is not JSON serializable")
