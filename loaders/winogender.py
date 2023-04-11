@@ -103,6 +103,7 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
                     "bls_pct_female",
                     "bls_year",
                 ),
+                dialect="excel-tab",
             )
             for entry in reader:
                 self._proportions[entry["occupation"]] = (
