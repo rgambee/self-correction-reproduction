@@ -1,14 +1,14 @@
 import json
-import tempfile
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Optional, Sequence, Type
+from typing import Iterator, Sequence, Type
 
 from loaders import DatasetLoader
 from loaders.bbq import BBQLoader
 from loaders.law import LawLoader
 from loaders.winogender import WinogenderLoader
+from tests.utils import make_temp_file
 
 # Disable long line warnings for this file
 # pylint: disable=line-too-long
@@ -22,16 +22,11 @@ class TestLoader(unittest.TestCase):
     @contextmanager
     def dummy_dataset(self) -> Iterator[Path]:
         """Write a dummy dataset to a tempfile and yield its path"""
-        temp_path: Optional[Path] = None
-        try:
-            with tempfile.NamedTemporaryFile(mode="wt", delete=False) as file:
-                temp_path = Path(file.name)
+        with make_temp_file() as temp_path:
+            with open(temp_path, "w", encoding="utf-8") as file:
                 file.writelines(self.DUMMY_DATA)
             # Close the file before yielding it for Windows compatibility
             yield temp_path
-        finally:
-            if temp_path:
-                temp_path.unlink()
 
     def load_dummy_dataset(self) -> None:
         """Test that an abbreviated version of the dataset can be loaded"""
