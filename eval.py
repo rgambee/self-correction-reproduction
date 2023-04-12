@@ -23,7 +23,10 @@ class Completion:
 
 @dataclass
 class Reply:
-    """A reply from the OpenAI API, possibly containing several completions"""
+    """A reply from the OpenAI API for a single sample
+
+    The reply could contain several completions.
+    """
 
     # pylint doesn't like two letter names, claiming they don't conform to the
     # snake_case convention
@@ -50,7 +53,7 @@ class RequestParameters:
 
 @dataclass
 class Request:
-    """A request to the OpenAI API"""
+    """A request to the OpenAI API for a single sample"""
 
     parameters: RequestParameters
     prompt: str
