@@ -137,6 +137,30 @@ async def process_requests(
             await results_queue.put(Result(sample=request.sample, reply=reply))
 
 
+async def process_results(
+    results_queue: asyncio.Queue[Result[P]],
+    results_file: Path,
+    exit_event: asyncio.Event,
+) -> None:
+    """Async worker for saving results to a file
+
+    The function runs until exit_event is set.
+    """
+    with jsonlines.open(
+        results_file,
+        mode="a",
+        dumps=partial(json.dumps, default=to_json_serializable_type),
+    ) as output:
+        while not exit_event.is_set():
+            try:
+                result = results_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                await asyncio.sleep(0.1)
+                continue
+            output.write(result)
+            results_queue.task_done()
+
+
 def find_most_recent_sample(results_file: Path) -> Optional[int]:
     """Check the results file to get the id of the sample that was last evaluated
 
