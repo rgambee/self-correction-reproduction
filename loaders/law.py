@@ -6,7 +6,7 @@ from typing import Any, Iterator, Mapping
 from loaders import DatasetLoader, Sample
 
 
-@dataclass
+@dataclass(order=True)
 class LawParameters:  # pylint: disable=too-many-instance-attributes
     """Parameters for a single sample from the Law dataset
 

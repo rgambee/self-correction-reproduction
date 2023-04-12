@@ -27,7 +27,7 @@ PRONOUNS = {
 }
 
 
-@dataclass
+@dataclass(order=True)
 class WinogenderParameters:
     """Parameters for a single sample from the Law dataset
 

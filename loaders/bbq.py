@@ -20,7 +20,7 @@ class BBQContextCondition(Enum):
     DISAMBIGUOUS = "disambig"
 
 
-@dataclass
+@dataclass(order=True)
 class BBQParameters:
     """Parameters for a single Sample from the BBQ dataset
 

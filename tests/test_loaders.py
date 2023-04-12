@@ -1,13 +1,14 @@
 import json
 import unittest
+from dataclasses import replace
 from typing import Sequence, Type
 
 import datasets
 from loaders import DatasetLoader
-from loaders.bbq import BBQLoader
+from loaders.bbq import BBQLoader, BBQSample
 from loaders.law import LawLoader
 from loaders.winogender import WinogenderLoader
-from tests.utils import count_iterable, write_dummy_dataset
+from tests.utils import BBQ_SAMPLE, count_iterable, write_dummy_dataset
 
 # Disable long line warnings for this file
 # pylint: disable=line-too-long
@@ -129,6 +130,58 @@ class TestWinogenderLoader(TestLoader):
             sentence,
             "The technician told the customer that they had completed the repair.",
         )
+
+
+class TestSampleOrdering(unittest.TestCase):
+    def test_equal(self) -> None:
+        """Test that identical samples are equal"""
+        sample = BBQ_SAMPLE
+        copy = replace(sample, correct_answer=sample.correct_answer)
+        self.assertEqual(sample, copy)
+
+    def test_order(self) -> None:
+        """Test that samples are ordered by example id"""
+        sample = BBQSample(
+            dataset="bbq",
+            category="b-class",
+            id=1,
+            parameters=BBQ_SAMPLE.parameters,
+            answers=["b", "a", "c"],
+            correct_answer=1,
+        )
+        all_less = BBQSample(
+            dataset="abq",
+            category="a-class",
+            id=0,
+            parameters=BBQ_SAMPLE.parameters,
+            answers=["a", "b", "c"],
+            correct_answer=0,
+        )
+        all_greater = BBQSample(
+            dataset="cbq",
+            category="c-class",
+            id=2,
+            parameters=BBQ_SAMPLE.parameters,
+            answers=["c", "b", "a"],
+            correct_answer=2,
+        )
+        fields = list(BBQSample.__dataclass_fields__.keys())
+        # Skip the parameters field since it's not worth the added complexity
+        fields.remove("parameters")
+        for i, field in enumerate(fields):
+            with self.subTest(field=field):
+                # Construct a sample with greater values for all later fields
+                barely_less = replace(
+                    all_less,
+                    **{fld: getattr(all_greater, fld) for fld in fields[i + 1 :]}
+                )
+                # Construct a sample with smaller values for all later fields
+                barely_greater = replace(
+                    all_greater,
+                    **{fld: getattr(all_less, fld) for fld in fields[i + 1 :]}
+                )
+                self.assertLess(barely_less, sample)
+                self.assertLess(sample, barely_greater)
 
 
 if __name__ == "__main__":

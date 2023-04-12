@@ -80,6 +80,10 @@ output-format = "colorized"
 # character used as a quote delimiter is used inconsistently within a module.
 check-quote-consistency = true
 
+[tool.pylint.typecheck]
+# Tell pylint about auto-generated attributes
+generated-members = ["__dataclass_fields__"]
+
 [tool.pylint.variables]
 # Controls whether we should check for unused import in __init__ files.
 init-import = true

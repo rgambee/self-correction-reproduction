@@ -20,7 +20,7 @@ from typing import (
 P = TypeVar("P")
 
 
-@dataclass
+@dataclass(order=True)
 class Sample(Generic[P]):
     """A single sample from a dataset"""
 
