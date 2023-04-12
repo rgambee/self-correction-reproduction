@@ -108,6 +108,24 @@ async def evaluate_dataset(
             output.write(Result(sample=sample, reply=reply))
 
 
+async def process_samples(
+    samples: Iterable[Sample[P]],
+    prompt_func: Callable[[Sample[P]], str],
+    parameters: RequestParameters,
+    requests_queue: asyncio.Queue[Request[P]],
+    last_sample_id: Optional[int] = None,
+) -> None:
+    """Prepare samples for submission to the API"""
+    for sample in samples:
+        # If we've already evaluated this sample, skip it
+        if last_sample_id is not None and sample.id <= last_sample_id:
+            continue
+
+        prompt = prompt_func(sample)
+        request = Request(parameters=parameters, prompt=prompt, sample=sample)
+        await requests_queue.put(request)
+
+
 async def process_requests(
     requests_queue: asyncio.Queue[Request[P]],
     results_queue: asyncio.Queue[Result[P]],
