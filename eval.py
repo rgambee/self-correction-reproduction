@@ -3,7 +3,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence
+from typing import Any, Callable, Dict, Generic, Iterable, Optional, Sequence
 
 import jsonlines
 import openai
@@ -52,11 +52,12 @@ class RequestParameters:
 
 
 @dataclass
-class Request:
+class Request(Generic[P]):
     """A request to the OpenAI API for a single sample"""
 
     parameters: RequestParameters
     prompt: str
+    sample: Sample[P]
 
     async def submit(self) -> Reply:
         """Submit this request to the OpenAI API and return the reply"""
@@ -93,7 +94,7 @@ async def evaluate_dataset(
                 continue
 
             prompt = prompt_func(sample)
-            request = Request(parameters=parameters, prompt=prompt)
+            request = Request(parameters=parameters, prompt=prompt, sample=sample)
             reply = await request.submit()
             output.write({"sample": sample, "reply": reply})
 

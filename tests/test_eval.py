@@ -56,7 +56,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
         """Test that a request is sent to the API in the proper format"""
         mock_params = create_mock_params()
         mock_prompt = "This is a test"
-        request = Request(prompt=mock_prompt, parameters=mock_params)
+        request = Request(prompt=mock_prompt, parameters=mock_params, sample=LAW_SAMPLE)
         await request.submit()
         mock_api.assert_called_once_with(prompt=mock_prompt, **asdict(mock_params))
 
