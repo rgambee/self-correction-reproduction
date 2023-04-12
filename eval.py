@@ -1,3 +1,4 @@
+import asyncio
 import json
 from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
@@ -105,6 +106,35 @@ async def evaluate_dataset(
             request = Request(parameters=parameters, prompt=prompt, sample=sample)
             reply = await request.submit()
             output.write(Result(sample=sample, reply=reply))
+
+
+async def process_requests(
+    requests_queue: asyncio.Queue[Request[P]],
+    results_queue: asyncio.Queue[Result[P]],
+    exit_event: asyncio.Event,
+    rate_limit_sleep: float = 10.0,
+) -> None:
+    """Async worker for submitting requests to the OpenAI API
+
+    Requests are taken from request_queue. Results are pushed to result_queue.
+
+    This function runs until exit_event is set.
+    """
+    while not exit_event.is_set():
+        try:
+            request = requests_queue.get_nowait()
+        except asyncio.QueueEmpty:
+            await asyncio.sleep(0.1)
+            continue
+        try:
+            reply = await request.submit()
+        except openai.error.RateLimitError:
+            await requests_queue.put(request)
+            await asyncio.sleep(rate_limit_sleep)
+            continue
+        else:
+            requests_queue.task_done()
+            await results_queue.put(Result(sample=request.sample, reply=reply))
 
 
 def find_most_recent_sample(results_file: Path) -> Optional[int]:
