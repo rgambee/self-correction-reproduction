@@ -67,6 +67,14 @@ class Request(Generic[P]):
         return Reply(**resp)
 
 
+@dataclass
+class Result(Generic[P]):
+    """A combined sample and reply"""
+
+    sample: Sample[P]
+    reply: Reply
+
+
 async def evaluate_dataset(
     samples: Iterable[Sample[P]],
     prompt_func: Callable[[Sample[P]], str],
@@ -96,7 +104,7 @@ async def evaluate_dataset(
             prompt = prompt_func(sample)
             request = Request(parameters=parameters, prompt=prompt, sample=sample)
             reply = await request.submit()
-            output.write({"sample": sample, "reply": reply})
+            output.write(Result(sample=sample, reply=reply))
 
 
 def find_most_recent_sample(results_file: Path) -> Optional[int]:
