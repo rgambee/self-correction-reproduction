@@ -1,7 +1,7 @@
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterable, Iterator, Optional
+from typing import Any, Iterable, Iterator, Optional
 
 from loaders.bbq import BBQContextCondition, BBQParameters, BBQPolarity, BBQSample
 from loaders.law import LawParameters, LawSample
@@ -78,3 +78,8 @@ def write_dummy_dataset(entries: Iterable[str]) -> Iterator[Path]:
             file.writelines(entries)
         # Close the file before yielding it for Windows compatibility
         yield temp_path
+
+
+def count_iterable(iterable: Iterable[Any]) -> int:
+    """Count the number of elements in an iterable"""
+    return sum(1 for _ in iterable)

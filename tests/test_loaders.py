@@ -7,7 +7,7 @@ from loaders import DatasetLoader
 from loaders.bbq import BBQLoader
 from loaders.law import LawLoader
 from loaders.winogender import WinogenderLoader
-from tests.utils import write_dummy_dataset
+from tests.utils import count_iterable, write_dummy_dataset
 
 # Disable long line warnings for this file
 # pylint: disable=line-too-long
@@ -22,10 +22,7 @@ class TestLoader(unittest.TestCase):
         """Test that an abbreviated version of the dataset can be loaded"""
         with write_dummy_dataset(self.DUMMY_DATA) as path:
             loader = self.LOADER_CLASS(path)
-            sample_count = 0
-            for _ in loader:
-                sample_count += 1
-            self.assertEqual(sample_count, self.EXPECTED_SAMPLES)
+            self.assertEqual(count_iterable(loader), self.EXPECTED_SAMPLES)
 
 
 class TestBBQLoader(TestLoader):
@@ -67,10 +64,7 @@ class TestBBQLoader(TestLoader):
     def test_real_dataset(self) -> None:
         """Test that the real BBQ dataset can be loaded"""
         loader = BBQLoader(datasets.find_bbq_dataset())
-        sample_count = 0
-        for _ in loader:
-            sample_count += 1
-        self.assertEqual(sample_count, 58492)
+        self.assertEqual(count_iterable(loader), 58492)
 
 
 class TestLawLoader(TestLoader):
@@ -89,10 +83,7 @@ class TestLawLoader(TestLoader):
     def test_real_dataset(self) -> None:
         """Test that the real law school dataset can be loaded"""
         loader = LawLoader(datasets.find_law_dataset())
-        sample_count = 0
-        for _ in loader:
-            sample_count += 1
-        self.assertEqual(sample_count, 21791)
+        self.assertEqual(count_iterable(loader), 21791)
 
 
 class TestWinogenderLoader(TestLoader):
@@ -124,10 +115,7 @@ class TestWinogenderLoader(TestLoader):
         """Test that the real winogender dataset can be loaded"""
         loader = self.LOADER_CLASS(datasets.find_winogender_dataset())
         loader.load_bls_data(datasets.find_winogender_stats())
-        sample_count = 0
-        for _ in loader:
-            sample_count += 1
-        self.assertEqual(sample_count, 60)
+        self.assertEqual(count_iterable(loader), 60)
 
     def test_sentence_with_pronoun(self) -> None:
         """Test that the sentence can be populated with a desired pronoun"""
