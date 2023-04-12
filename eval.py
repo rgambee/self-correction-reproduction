@@ -55,15 +55,15 @@ class Request:
     parameters: RequestParameters
     prompt: str
 
-    def submit(self) -> Reply:
+    async def submit(self) -> Reply:
         """Submit this request to the OpenAI API and return the reply"""
-        resp = openai.Completion.create(  # type: ignore[no-untyped-call]
+        resp = await openai.Completion.acreate(  # type: ignore[no-untyped-call]
             prompt=self.prompt, **asdict(self.parameters)
         )
         return Reply(**resp)
 
 
-def evaluate_dataset(
+async def evaluate_dataset(
     samples: Iterable[Sample[P]],
     prompt_func: Callable[[Sample[P]], str],
     results_file: Path,
@@ -91,7 +91,7 @@ def evaluate_dataset(
 
             prompt = prompt_func(sample)
             request = Request(parameters=parameters, prompt=prompt)
-            reply = request.submit()
+            reply = await request.submit()
             output.write({"sample": sample, "reply": reply})
 
 

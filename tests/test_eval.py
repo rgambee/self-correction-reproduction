@@ -50,23 +50,23 @@ def create_mock_response(**kwargs: Any) -> Dict[str, Any]:
     return response
 
 
-@patch("openai.Completion.create", return_value=create_mock_response())
-class TestDatasetEvaluation(unittest.TestCase):
-    def test_request_submission(self, mock_api: MagicMock) -> None:
+@patch("openai.Completion.acreate", return_value=create_mock_response())
+class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
+    async def test_request_submission(self, mock_api: MagicMock) -> None:
         """Test that a request is sent to the API in the proper format"""
         mock_params = create_mock_params()
         mock_prompt = "This is a test"
         request = Request(prompt=mock_prompt, parameters=mock_params)
-        request.submit()
+        await request.submit()
         mock_api.assert_called_once_with(prompt=mock_prompt, **asdict(mock_params))
 
-    def test_response_handling(self, mock_api: MagicMock) -> None:
+    async def test_response_handling(self, mock_api: MagicMock) -> None:
         """Test that API responses are parsed and saved correctly"""
         mock_params = create_mock_params()
         mock_prompt = "This is a test"
         mock_sample = LAW_SAMPLE
         with make_temp_file() as temp_output:
-            evaluate_dataset(
+            await evaluate_dataset(
                 samples=[mock_sample],
                 prompt_func=lambda s: mock_prompt,
                 results_file=temp_output,
@@ -80,11 +80,11 @@ class TestDatasetEvaluation(unittest.TestCase):
         self.assertIn("reply", results)
         self.assertEqual(results["reply"], mock_api.return_value)
 
-    def test_response_error(self, mock_api: MagicMock) -> None:
+    async def test_response_error(self, mock_api: MagicMock) -> None:
         """Test that API errors propagated to caller"""
         mock_api.return_value = {"message": "Invalid reply"}
         with self.assertRaises(TypeError):
-            evaluate_dataset(
+            await evaluate_dataset(
                 samples=[LAW_SAMPLE],
                 prompt_func=prompt_question,
                 results_file=Path(os.devnull),
@@ -93,21 +93,21 @@ class TestDatasetEvaluation(unittest.TestCase):
 
         mock_api.side_effect = RuntimeError("Invalid request")
         with self.assertRaises(RuntimeError):
-            evaluate_dataset(
+            await evaluate_dataset(
                 samples=[LAW_SAMPLE],
                 prompt_func=prompt_question,
                 results_file=Path(os.devnull),
                 parameters=create_mock_params(),
             )
 
-    def test_end_to_end(self, mock_api: MagicMock) -> None:
+    async def test_end_to_end(self, mock_api: MagicMock) -> None:
         """Test that samples are loaded, requests are sent and replies saved"""
         mock_params = create_mock_params()
         with write_dummy_dataset(TestBBQLoader.DUMMY_DATA) as temp_input:
             loader = BBQLoader(temp_input)
             samples = list(loader)
             with make_temp_file() as temp_output:
-                evaluate_dataset(
+                await evaluate_dataset(
                     samples=samples,
                     prompt_func=prompt_question,
                     results_file=temp_output,
@@ -138,7 +138,7 @@ class TestDatasetEvaluation(unittest.TestCase):
                         result_index += 1
         self.assertEqual(result_index, len(samples))
 
-    def test_resume(self, mock_api: MagicMock) -> None:
+    async def test_resume(self, mock_api: MagicMock) -> None:
         """Test that the dataset is resumed from the last sample"""
         mock_params = create_mock_params()
         mock_prompt = "This is a test"
@@ -150,7 +150,7 @@ class TestDatasetEvaluation(unittest.TestCase):
                     # Pretend the first sample is already in the results file
                     json.dump({"sample": {"id": 0}}, file)
                     file.write("\n")
-                evaluate_dataset(
+                await evaluate_dataset(
                     samples=samples,
                     prompt_func=lambda s: mock_prompt,
                     results_file=temp_output,
