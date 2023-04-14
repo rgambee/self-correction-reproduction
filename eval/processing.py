@@ -66,9 +66,12 @@ async def process_requests(
     exit_event: asyncio.Event,
     rate_limit_sleep: float = 10.0,
 ) -> None:
-    """Async worker for submitting requests to the OpenAI API
+    """Submit requests to the OpenAI API
 
     Requests are taken from request_queue. Results are pushed to result_queue.
+    Each result consists of
+        * The original sample used to generate the prompt
+        * The reply received from the model
 
     This function runs until exit_event is set.
     """
@@ -94,7 +97,11 @@ async def process_results(
     results_file: Path,
     exit_event: asyncio.Event,
 ) -> None:
-    """Async worker for saving results to a file
+    """Save results to a file for later analysis
+
+    Each result consists of
+        * The original sample used to generate the prompt
+        * The reply received from the model
 
     The function runs until exit_event is set.
     """
