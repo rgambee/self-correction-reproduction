@@ -8,10 +8,9 @@ from typing import Any, Dict, Iterable, Iterator, Mapping, Union
 from unittest.mock import MagicMock, call, patch
 
 from eval import Request, RequestParameters, evaluate_dataset, find_most_recent_sample
-from loaders.bbq import BBQLoader, BBQParameters, BBQSample
-from loaders.law import LawLoader
+from loaders.law import LawLoader, LawParameters, LawSample
 from prompts import prompt_question
-from tests.test_loaders import TestBBQLoader, TestLawLoader
+from tests.test_loaders import TestLawLoader
 from tests.utils import LAW_SAMPLE, make_temp_file, write_dummy_dataset
 
 
@@ -108,8 +107,9 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
         """Test that samples are loaded, requests are sent and replies saved"""
         mock_params = create_mock_params()
         mock_prompt = MagicMock(side_effect=prompt_question)
-        with write_dummy_dataset(TestBBQLoader.DUMMY_DATA) as temp_input:
-            loader = BBQLoader(temp_input)
+        # Use dummy law school dataset since that contains multiple samples
+        with write_dummy_dataset(TestLawLoader.DUMMY_DATA) as temp_input:
+            loader = LawLoader(temp_input)
             samples = list(loader)
             with make_temp_file() as temp_output:
                 await evaluate_dataset(
@@ -117,7 +117,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                     prompt_func=mock_prompt,
                     results_file=temp_output,
                     parameters=mock_params,
-                    num_workers=1,
+                    num_workers=len(samples),
                 )
                 self.assertEqual(
                     mock_prompt.mock_calls,
@@ -138,10 +138,10 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                     for line in file:
                         result = json.loads(line)
                         self.assertIn("sample", result)
-                        result["sample"]["parameters"] = BBQParameters(
+                        result["sample"]["parameters"] = LawParameters(
                             **result["sample"]["parameters"]
                         )
-                        loaded_sample = BBQSample(**result["sample"])
+                        loaded_sample = LawSample(**result["sample"])
                         self.assertEqual(loaded_sample, samples[result_index])
                         self.assertIn("reply", result)
                         self.assertEqual(result["reply"], mock_api.return_value)
