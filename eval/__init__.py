@@ -40,7 +40,7 @@ async def evaluate_dataset(
     exit_event = asyncio.Event()
 
     # Create tasks to track all the workers
-    sample_worker = asyncio.create_task(
+    sample_task = asyncio.create_task(
         process_samples(
             samples=samples,
             prompt_func=prompt_func,
@@ -50,7 +50,7 @@ async def evaluate_dataset(
             last_sample_id=last_sample_id,
         ),
     )
-    request_workers = [
+    request_tasks = [
         asyncio.create_task(
             process_requests(
                 requests_queue=requests_queue,
@@ -60,7 +60,7 @@ async def evaluate_dataset(
         )
         for _ in range(num_workers)
     ]
-    result_worker = asyncio.create_task(
+    result_task = asyncio.create_task(
         process_results(
             results_queue=results_queue,
             results_file=results_file,
@@ -69,14 +69,14 @@ async def evaluate_dataset(
     )
 
     # Wait for all samples to be processed
-    await sample_worker
+    await sample_task
     # Wait for requests to be sent and results saved
     await requests_queue.join()
     await results_queue.join()
-    # Tell workers to exit
+    # Tell tasks to exit
     exit_event.set()
-    # Wait for them to return
-    await asyncio.wait(request_workers + [result_worker])
+    # Wait for them to finish
+    await asyncio.wait(request_tasks + [result_task])
 
 
 def find_most_recent_sample(results_file: Path) -> Optional[int]:
