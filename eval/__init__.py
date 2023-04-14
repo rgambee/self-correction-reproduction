@@ -50,16 +50,20 @@ async def evaluate_dataset(
             last_sample_id=last_sample_id,
         ),
     )
-    request_tasks = [
-        asyncio.create_task(
+    sample_task.set_name("process_samples")
+
+    request_tasks: List[asyncio.Task[None]] = []
+    for i in range(num_workers):
+        task = asyncio.create_task(
             process_requests(
                 requests_queue=requests_queue,
                 results_queue=results_queue,
                 exit_event=exit_event,
             ),
         )
-        for _ in range(num_workers)
-    ]
+        task.set_name(f"process_requests_{i:02}")
+        request_tasks.append(task)
+
     result_task = asyncio.create_task(
         process_results(
             results_queue=results_queue,
@@ -67,6 +71,7 @@ async def evaluate_dataset(
             exit_event=exit_event,
         ),
     )
+    result_task.set_name("process_results")
 
     # Wait for all samples to be processed
     await sample_task
