@@ -4,6 +4,9 @@ from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
 from functools import partial
 from pathlib import Path
+
+# Import monotonic() on its own so that it can be mocked during testing
+from time import monotonic
 from typing import Any, Callable, Dict, Generic, Iterable, Optional, Sequence
 
 import jsonlines
@@ -76,19 +79,21 @@ class Result(Generic[P]):
     reply: Reply
 
 
+# pylint: disable-next=too-many-arguments
 async def evaluate_dataset(
     samples: Iterable[Sample[P]],
     prompt_func: Callable[[Sample[P]], str],
     results_file: Path,
     parameters: RequestParameters,
+    max_requests_per_min: float,
     num_workers: int = 16,
 ) -> None:
     """Evaluate each sample of a dataset using the OpenAI API
 
-    Results will be appended to the given path.
+    Results will be appended to the file at the given path.
 
     This function will skip any samples that have already been evaluated by examining
-    the results file.
+    the results file. It will enforce a request rate limit but not a token rate limit.
     """
     # Check the results file to see if we've already evaluated some of the samples
     last_sample_id = find_most_recent_sample(results_file)
@@ -104,6 +109,7 @@ async def evaluate_dataset(
             prompt_func=prompt_func,
             parameters=parameters,
             requests_queue=requests_queue,
+            max_requests_per_min=max_requests_per_min,
             last_sample_id=last_sample_id,
         ),
     )
@@ -136,22 +142,48 @@ async def evaluate_dataset(
     await asyncio.wait(request_workers + [result_worker])
 
 
+# pylint: disable-next=too-many-arguments
 async def process_samples(
     samples: Iterable[Sample[P]],
     prompt_func: Callable[[Sample[P]], str],
     parameters: RequestParameters,
     requests_queue: asyncio.Queue[Request[P]],
+    max_requests_per_min: float,
     last_sample_id: Optional[int] = None,
 ) -> None:
-    """Prepare samples for submission to the API"""
+    """Prepare samples for submission to the API
+
+    This function limits the rate at which requests are enqueued to stay below the API's
+    limit. It does not enforce a token rate limit.
+    """
+    available_requests = max_requests_per_min
+    max_requests_per_sec = max_requests_per_min / 60.0
+    last_check_time = monotonic()
     for sample in samples:
         # If we've already evaluated this sample, skip it
         if last_sample_id is not None and sample.id <= last_sample_id:
             continue
 
+        # Limit the rate at which requests are enqueued to avoid exceeding the API's
+        # limit. It would be more accurate to enforce this limit when the requests are
+        # actually submitted. But that's more complex since submissions are spread
+        # across several workers, which would need to share state.
+        # This is a do-while loop since we want to update available_requests on every
+        # iteration of the outer for loop.
+        while True:
+            now = monotonic()
+            available_requests = min(
+                available_requests + (now - last_check_time) * max_requests_per_sec,
+                max_requests_per_min,
+            )
+            last_check_time = now
+            if available_requests >= 1.0:
+                break
+            await asyncio.sleep(min(1.0 / max_requests_per_sec, 0.1))
         prompt = prompt_func(sample)
         request = Request(parameters=parameters, prompt=prompt, sample=sample)
         await requests_queue.put(request)
+        available_requests = max(available_requests - 1.0, 0.0)
 
 
 async def process_requests(

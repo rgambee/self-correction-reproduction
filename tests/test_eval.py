@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import unittest
@@ -7,7 +8,13 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, Mapping, Union
 from unittest.mock import MagicMock, call, patch
 
-from eval import Request, RequestParameters, evaluate_dataset, find_most_recent_sample
+from eval import (
+    Request,
+    RequestParameters,
+    evaluate_dataset,
+    find_most_recent_sample,
+    process_samples,
+)
 from loaders.law import LawLoader, LawParameters, LawSample
 from prompts import prompt_question
 from tests.test_loaders import TestLawLoader
@@ -70,6 +77,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                 prompt_func=lambda s: mock_prompt,
                 results_file=temp_output,
                 parameters=mock_params,
+                max_requests_per_min=100.0,
                 num_workers=1,
             )
             with open(temp_output, encoding="utf-8") as file:
@@ -90,6 +98,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                 prompt_func=prompt_question,
                 results_file=Path(os.devnull),
                 parameters=create_mock_params(),
+                max_requests_per_min=100.0,
                 num_workers=1,
             )
 
@@ -100,6 +109,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                 prompt_func=prompt_question,
                 results_file=Path(os.devnull),
                 parameters=create_mock_params(),
+                max_requests_per_min=100.0,
                 num_workers=1,
             )
 
@@ -117,6 +127,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                     prompt_func=mock_prompt,
                     results_file=temp_output,
                     parameters=mock_params,
+                    max_requests_per_min=100.0,
                     num_workers=len(samples),
                 )
                 self.assertEqual(
@@ -165,6 +176,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                     prompt_func=lambda s: mock_prompt,
                     results_file=temp_output,
                     parameters=mock_params,
+                    max_requests_per_min=100.0,
                     num_workers=1,
                 )
                 mock_api.assert_called_once()
@@ -175,6 +187,42 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(result["sample"]["id"], result_index)
                         result_index += 1
             self.assertEqual(result_index, len(samples))
+
+    # Mock eval's handle of time.monotonic(), not the original. Otherwise, we'd
+    # interfere with asyncio's sleeping and timeout functionality.
+    @patch("eval.monotonic", return_value=123456.0)
+    async def test_rate_limit(self, mock_time: MagicMock, _: MagicMock) -> None:
+        """Test that the request rate limit is enforced"""
+        mock_params = create_mock_params()
+        mock_prompt = "This is a test"
+        max_requests_per_min = 1.0
+        request_interval_s = 1.0 / (max_requests_per_min / 60.0)
+        timeout_s = 0.1
+        requests_queue: asyncio.Queue[Request[LawParameters]] = asyncio.Queue()
+        task = asyncio.create_task(
+            process_samples(
+                samples=[LAW_SAMPLE] * 2,
+                prompt_func=lambda s: mock_prompt,
+                parameters=mock_params,
+                requests_queue=requests_queue,
+                max_requests_per_min=max_requests_per_min,
+            )
+        )
+        # First request should be sent immediately
+        await asyncio.wait_for(requests_queue.get(), timeout_s)
+        # Second request should be delayed
+        # Wrap it in a task so we can await it more than once.
+        second_request = asyncio.create_task(requests_queue.get())
+        with self.assertRaises(asyncio.TimeoutError):
+            await asyncio.wait_for(
+                asyncio.shield(second_request),
+                timeout_s,
+            )
+        # Advance time and try again
+        mock_time.return_value += request_interval_s
+        await asyncio.wait_for(second_request, timeout_s)
+        # Wait for task to finish
+        await asyncio.wait_for(task, timeout_s)
 
 
 class TestFindMostRecentSample(unittest.TestCase):
