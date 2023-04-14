@@ -107,16 +107,21 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
     async def test_end_to_end(self, mock_api: MagicMock) -> None:
         """Test that samples are loaded, requests are sent and replies saved"""
         mock_params = create_mock_params()
+        mock_prompt = MagicMock(side_effect=prompt_question)
         with write_dummy_dataset(TestBBQLoader.DUMMY_DATA) as temp_input:
             loader = BBQLoader(temp_input)
             samples = list(loader)
             with make_temp_file() as temp_output:
                 await evaluate_dataset(
                     samples=samples,
-                    prompt_func=prompt_question,
+                    prompt_func=mock_prompt,
                     results_file=temp_output,
                     parameters=mock_params,
                     num_workers=1,
+                )
+                self.assertEqual(
+                    mock_prompt.mock_calls,
+                    [call(samp) for samp in samples],
                 )
                 self.assertEqual(
                     mock_api.mock_calls,
