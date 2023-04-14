@@ -30,6 +30,9 @@ async def process_samples(
     This function limits the rate at which requests are enqueued to stay below the API's
     limit. It does not enforce a token rate limit.
     """
+    if max_requests_per_min <= 0:
+        raise ValueError("max_requests_per_min must be greater than 0")
+
     available_requests = max_requests_per_min
     max_requests_per_sec = max_requests_per_min / 60.0
     last_check_time = monotonic()

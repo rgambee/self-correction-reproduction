@@ -25,6 +25,9 @@ async def evaluate_dataset(
     This function will skip any samples that have already been evaluated by examining
     the results file. It will enforce a request rate limit but not a token rate limit.
     """
+    if num_workers < 1:
+        raise ValueError("num_workers must be at least 1")
+
     # Check the results file to see if we've already evaluated some of the samples
     last_sample_id = find_most_recent_sample(results_file)
 
