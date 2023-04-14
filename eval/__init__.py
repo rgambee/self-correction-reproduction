@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from pathlib import Path
 from typing import Callable, Iterable, Optional
 
@@ -28,8 +29,11 @@ async def evaluate_dataset(
     if num_workers < 1:
         raise ValueError("num_workers must be at least 1")
 
+    logger = logging.getLogger(__name__)
     # Check the results file to see if we've already evaluated some of the samples
     last_sample_id = find_most_recent_sample(results_file)
+    if last_sample_id is not None:
+        logger.info("Resuming from sample %d", last_sample_id)
 
     requests_queue: asyncio.Queue[Request[P]] = asyncio.Queue(maxsize=num_workers)
     results_queue: asyncio.Queue[Result[P]] = asyncio.Queue(maxsize=num_workers)
