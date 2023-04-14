@@ -8,13 +8,9 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, Mapping, Union
 from unittest.mock import MagicMock, call, patch
 
-from eval import (
-    Request,
-    RequestParameters,
-    evaluate_dataset,
-    find_most_recent_sample,
-    process_samples,
-)
+from eval import evaluate_dataset, find_most_recent_sample
+from eval.classes import Request, RequestParameters
+from eval.processing import process_samples
 from loaders.law import LawLoader, LawParameters, LawSample
 from prompts import prompt_question
 from tests.test_loaders import TestLawLoader
@@ -190,7 +186,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
 
     # Mock eval's handle of time.monotonic(), not the original. Otherwise, we'd
     # interfere with asyncio's sleeping and timeout functionality.
-    @patch("eval.monotonic", return_value=123456.0)
+    @patch("eval.processing.monotonic", return_value=123456.0)
     async def test_rate_limit(self, mock_time: MagicMock, _: MagicMock) -> None:
         """Test that the request rate limit is enforced"""
         mock_params = create_mock_params()
