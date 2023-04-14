@@ -89,7 +89,9 @@ async def process_requests(
             continue
         else:
             requests_queue.task_done()
-            await results_queue.put(Result(sample=request.sample, reply=reply))
+            await results_queue.put(
+                Result(sample=request.sample, prompt=request.prompt, reply=reply)
+            )
 
 
 async def process_results(

@@ -150,6 +150,10 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                         )
                         loaded_sample = LawSample(**result["sample"])
                         self.assertEqual(loaded_sample, samples[result_index])
+                        self.assertIn("prompt", result)
+                        self.assertEqual(
+                            result["prompt"], prompt_question(loaded_sample)
+                        )
                         self.assertIn("reply", result)
                         self.assertEqual(result["reply"], mock_api.return_value)
                         result_index += 1

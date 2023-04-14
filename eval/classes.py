@@ -67,4 +67,5 @@ class Result(Generic[P]):
     """A combined sample and reply"""
 
     sample: Sample[P]
+    prompt: str
     reply: Reply
