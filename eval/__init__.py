@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Callable, Iterable, Optional
+from typing import Any, Callable, Iterable, List, Optional
 
 import jsonlines
 
@@ -73,15 +73,38 @@ async def evaluate_dataset(
     )
     result_task.set_name("process_results")
 
-    # Wait for all samples to be processed
-    await sample_task
-    # Wait for requests to be sent and results saved
-    await requests_queue.join()
-    await results_queue.join()
-    # Tell tasks to exit
-    exit_event.set()
-    # Wait for them to finish
-    await asyncio.wait(request_tasks + [result_task])
+    pending_tasks = set(request_tasks + [sample_task, result_task])
+    finished = False
+    try:
+        while not finished and pending_tasks:
+            done_tasks, pending_tasks = await asyncio.wait(
+                pending_tasks, return_when=asyncio.FIRST_COMPLETED
+            )
+            for task in done_tasks:
+                logging.debug("Task %s is done", task.get_name())
+                err = task.exception()
+                if err is not None:
+                    raise err
+                if task is sample_task:
+                    # No more samples. Break out of while loop to shut down other tasks.
+                    logging.info("No more samples, shutting down...")
+                    finished = True
+    except Exception:
+        logging.exception("Encountered error, shutting down...")
+        raise
+    finally:
+        # Shut things down from upstream to downstream to avoid information being lost
+        await stop_task(sample_task)
+        for task in request_tasks:
+            await stop_task(sample_task)
+        if not result_task.done():
+            # The result task is still running. Give it a moment to finish saving any
+            # results still in the queue.
+            try:
+                await asyncio.wait_for(results_queue.join(), timeout=1.0)
+            except asyncio.TimeoutError:
+                logger.debug("Not all pending results were able to be saved")
+        await stop_task(result_task)
 
 
 def find_most_recent_sample(results_file: Path) -> Optional[int]:
@@ -104,3 +127,17 @@ def find_most_recent_sample(results_file: Path) -> Optional[int]:
             except (AttributeError, TypeError, ValueError):
                 pass
     return last_id
+
+
+async def stop_task(task: asyncio.Task[Any], timeout: float = 1.0) -> None:
+    """Stop the given task gracefully by canceling it and waiting for it to finish"""
+    logger = logging.getLogger(__name__)
+    if not task.done():
+        logger.debug("Canceling task %s", task.get_name())
+        task.cancel()
+        try:
+            await asyncio.wait_for(task, timeout=timeout)
+        except asyncio.CancelledError:
+            logger.debug("Task %s canceled", task.get_name())
+        except asyncio.TimeoutError:
+            logger.debug("Timed out while waiting for %s to cancel", task.get_name())
