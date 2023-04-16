@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import unittest
 from contextlib import contextmanager
@@ -84,30 +85,31 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
         self.assertIn("reply", results)
         self.assertEqual(results["reply"], mock_api.return_value)
 
-    @unittest.skip("Hangs due to poor error handing")
     async def test_response_error(self, mock_api: MagicMock) -> None:
         """Test that API errors propagated to caller"""
         mock_api.return_value = {"message": "Invalid reply"}
-        with self.assertRaises(TypeError):
-            await evaluate_dataset(
-                samples=[LAW_SAMPLE],
-                prompt_func=prompt_question,
-                results_file=Path(os.devnull),
-                parameters=create_mock_params(),
-                max_requests_per_min=100.0,
-                num_workers=1,
-            )
+        with self.assertLogs(level=logging.ERROR):
+            with self.assertRaises(TypeError):
+                await evaluate_dataset(
+                    samples=[LAW_SAMPLE],
+                    prompt_func=prompt_question,
+                    results_file=Path(os.devnull),
+                    parameters=create_mock_params(),
+                    max_requests_per_min=100.0,
+                    num_workers=1,
+                )
 
         mock_api.side_effect = RuntimeError("Invalid request")
-        with self.assertRaises(RuntimeError):
-            await evaluate_dataset(
-                samples=[LAW_SAMPLE],
-                prompt_func=prompt_question,
-                results_file=Path(os.devnull),
-                parameters=create_mock_params(),
-                max_requests_per_min=100.0,
-                num_workers=1,
-            )
+        with self.assertLogs(level=logging.ERROR):
+            with self.assertRaises(RuntimeError):
+                await evaluate_dataset(
+                    samples=[LAW_SAMPLE],
+                    prompt_func=prompt_question,
+                    results_file=Path(os.devnull),
+                    parameters=create_mock_params(),
+                    max_requests_per_min=100.0,
+                    num_workers=1,
+                )
 
     async def test_end_to_end(self, mock_api: MagicMock) -> None:
         """Test that samples are loaded, requests are sent and replies saved"""
