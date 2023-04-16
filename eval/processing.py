@@ -66,7 +66,6 @@ async def process_samples(
 async def process_requests(
     requests_queue: asyncio.Queue[Request[P]],
     results_queue: asyncio.Queue[Result[P]],
-    exit_event: asyncio.Event,
     rate_limit_sleep: float = 10.0,
 ) -> None:
     """Submit requests to the OpenAI API
@@ -76,9 +75,9 @@ async def process_requests(
         * The original sample used to generate the prompt
         * The reply received from the model
 
-    This function runs until exit_event is set.
+    This coroutine runs until it is canceled.
     """
-    while not exit_event.is_set():
+    while True:
         try:
             request = requests_queue.get_nowait()
         except asyncio.QueueEmpty:
@@ -100,7 +99,6 @@ async def process_requests(
 async def process_results(
     results_queue: asyncio.Queue[Result[P]],
     results_file: Path,
-    exit_event: asyncio.Event,
 ) -> None:
     """Save results to a file for later analysis
 
@@ -108,14 +106,14 @@ async def process_results(
         * The original sample used to generate the prompt
         * The reply received from the model
 
-    The function runs until exit_event is set.
+    This coroutine runs until it is canceled.
     """
     with jsonlines.open(
         results_file,
         mode="a",
         dumps=partial(json.dumps, default=to_json_serializable_type),
     ) as output:
-        while not exit_event.is_set():
+        while True:
             try:
                 result = results_queue.get_nowait()
             except asyncio.QueueEmpty:

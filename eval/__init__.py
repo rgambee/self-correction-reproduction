@@ -37,7 +37,6 @@ async def evaluate_dataset(
 
     requests_queue: asyncio.Queue[Request[P]] = asyncio.Queue(maxsize=num_workers)
     results_queue: asyncio.Queue[Result[P]] = asyncio.Queue(maxsize=num_workers)
-    exit_event = asyncio.Event()
 
     # Create tasks to track all the workers
     sample_task = asyncio.create_task(
@@ -58,7 +57,6 @@ async def evaluate_dataset(
             process_requests(
                 requests_queue=requests_queue,
                 results_queue=results_queue,
-                exit_event=exit_event,
             ),
         )
         task.set_name(f"process_requests_{i:02}")
@@ -68,7 +66,6 @@ async def evaluate_dataset(
         process_results(
             results_queue=results_queue,
             results_file=results_file,
-            exit_event=exit_event,
         ),
     )
     result_task.set_name("process_results")
