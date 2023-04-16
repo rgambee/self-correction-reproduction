@@ -70,7 +70,49 @@ async def evaluate_dataset(
     )
     result_task.set_name("process_results")
 
-    pending_tasks = set(request_tasks + [sample_task, result_task])
+    await wait_for_tasks_to_complete(
+        sample_task=sample_task,
+        request_tasks=request_tasks,
+        result_task=result_task,
+        results_queue=results_queue,
+    )
+
+
+def find_most_recent_sample(results_file: Path) -> Optional[int]:
+    """Check the results file to get the id of the sample that was last evaluated
+
+    This is helpful for resuming a long evaluation after it's been interrupted.
+
+    If the results file doesn't exist or doesn't contain any valid results, return None.
+
+    This function assumes the results are sorted by sample id.
+    """
+    if not results_file.exists():
+        return None
+
+    last_id: Optional[int] = None
+    with jsonlines.open(results_file) as reader:
+        for line in reader.iter(type=dict, skip_invalid=True):
+            try:
+                last_id = int(line.get("sample", {}).get("id", None))
+            except (AttributeError, TypeError, ValueError):
+                pass
+    return last_id
+
+
+async def wait_for_tasks_to_complete(
+    sample_task: asyncio.Task[None],
+    request_tasks: Iterable[asyncio.Task[None]],
+    result_task: asyncio.Task[None],
+    results_queue: asyncio.Queue[Result[P]],
+) -> None:
+    """Wait for all tasks to complete and handle any errors that occur"""
+    logger = logging.getLogger(__name__)
+
+    pending_tasks = set(request_tasks)
+    pending_tasks.add(sample_task)
+    pending_tasks.add(result_task)
+
     finished = False
     try:
         while not finished and pending_tasks:
@@ -102,28 +144,6 @@ async def evaluate_dataset(
             except asyncio.TimeoutError:
                 logger.debug("Not all pending results were able to be saved")
         await stop_task(result_task)
-
-
-def find_most_recent_sample(results_file: Path) -> Optional[int]:
-    """Check the results file to get the id of the sample that was last evaluated
-
-    This is helpful for resuming a long evaluation after it's been interrupted.
-
-    If the results file doesn't exist or doesn't contain any valid results, return None.
-
-    This function assumes the results are sorted by sample id.
-    """
-    if not results_file.exists():
-        return None
-
-    last_id: Optional[int] = None
-    with jsonlines.open(results_file) as reader:
-        for line in reader.iter(type=dict, skip_invalid=True):
-            try:
-                last_id = int(line.get("sample", {}).get("id", None))
-            except (AttributeError, TypeError, ValueError):
-                pass
-    return last_id
 
 
 async def stop_task(task: asyncio.Task[Any], timeout: float = 1.0) -> None:
