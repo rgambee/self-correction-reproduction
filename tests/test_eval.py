@@ -210,7 +210,10 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
         mock_params = create_mock_params()
         max_requests_per_min = 1.0
         request_interval_s = 1.0 / (max_requests_per_min / 60.0)
-        timeout_s = 0.1
+        # For operations that we expect to hang, we use a short timeout save time
+        short_timeout_s = 0.1
+        # For operations that we expect to finish, we use a long timeout for reliability
+        long_timeout_s = short_timeout_s * 10
         requests_queue: asyncio.Queue[Request[LawParameters]] = asyncio.Queue()
         task = asyncio.create_task(
             process_samples(
@@ -222,20 +225,20 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
             )
         )
         # First request should be sent immediately
-        await asyncio.wait_for(requests_queue.get(), timeout_s)
+        await asyncio.wait_for(requests_queue.get(), long_timeout_s)
         # Second request should be delayed
         # Wrap it in a task so we can await it more than once.
         second_request = asyncio.create_task(requests_queue.get())
         with self.assertRaises(asyncio.TimeoutError):
             await asyncio.wait_for(
                 asyncio.shield(second_request),
-                timeout_s,
+                short_timeout_s,
             )
         # Advance time and try again
         mock_time.return_value += request_interval_s
-        await asyncio.wait_for(second_request, timeout_s)
+        await asyncio.wait_for(second_request, long_timeout_s)
         # Wait for task to finish
-        await asyncio.wait_for(task, timeout_s)
+        await asyncio.wait_for(task, long_timeout_s)
 
 
 class TestFindMostRecentSample(unittest.TestCase):
