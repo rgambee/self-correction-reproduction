@@ -13,7 +13,8 @@ from eval import evaluate_dataset, find_most_recent_sample
 from eval.processing import process_samples
 from eval.request import Request, RequestParameters
 from loaders.law import LawLoader, LawParameters, LawSample
-from prompts import Message, prompt_question
+from prompts import prompt_question
+from prompts.message import Message
 from tests.test_loaders import TestLawLoader
 from tests.utils import LAW_SAMPLE, make_temp_file, write_dummy_dataset
 

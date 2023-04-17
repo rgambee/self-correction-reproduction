@@ -5,7 +5,7 @@ import openai
 
 from eval.result import Reply
 from loaders import P, Sample
-from prompts import Messages
+from prompts.message import Messages
 
 
 @dataclass

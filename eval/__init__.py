@@ -9,7 +9,7 @@ from eval.processing import process_requests, process_results, process_samples
 from eval.request import Request, RequestParameters
 from eval.result import Result
 from loaders import P, Sample
-from prompts import Messages
+from prompts.message import Messages
 
 
 # pylint: disable-next=too-many-arguments

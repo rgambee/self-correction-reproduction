@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, Sequence, Type, TypeVar
 
 from loaders import P, Sample
-from prompts import Message, Messages
+from prompts.message import Message, Messages
 
 
 @dataclass
