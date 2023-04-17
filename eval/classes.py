@@ -1,5 +1,6 @@
+from collections import abc
 from dataclasses import asdict, dataclass
-from typing import Generic, Optional, Sequence
+from typing import Any, Generic, Optional, Sequence, Type, TypeVar
 
 import openai
 
@@ -21,8 +22,7 @@ class Completion:
     finish_reason: str
 
     def __post_init__(self) -> None:
-        # pylint: disable-next=not-a-mapping
-        self.message = Message(**self.message)  # type: ignore[arg-type]
+        self.message = dataclass_from_mapping_or_iterable(Message, self.message)
 
 
 @dataclass
@@ -42,7 +42,7 @@ class Reply:
 
     def __post_init__(self) -> None:
         self.choices = [
-            Completion(**choice) for choice in self.choices  # type: ignore[arg-type]
+            dataclass_from_mapping_or_iterable(Completion, chc) for chc in self.choices
         ]
 
 
@@ -83,3 +83,19 @@ class Result(Generic[P]):
     sample: Sample[P]
     prompt: str
     reply: Reply
+
+
+T = TypeVar("T")
+
+
+def dataclass_from_mapping_or_iterable(cls: Type[T], value: Any) -> T:
+    """Convert a mapping or iterable to an instance of a dataclass"""
+    if isinstance(value, cls):
+        return value
+    if isinstance(value, abc.Mapping):
+        return cls(**value)
+    try:
+        iter(value)
+    except TypeError as err:
+        raise TypeError(f"Can't convert {value} to {cls}") from err
+    return cls(*value)
