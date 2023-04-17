@@ -1,4 +1,5 @@
 from dataclasses import asdict, dataclass, replace
+from textwrap import dedent
 from typing import Any, List, Literal, Sequence
 
 from loaders import Sample
@@ -29,3 +30,17 @@ def format_messages(
     for msg in messages:
         formatted.append(replace(msg, content=msg.content.format(**kwargs)))
     return tuple(formatted)
+
+
+def normalize_whitespace(text: str, oneline: bool = True) -> str:
+    """Dedent the given string and strip any leading or trailing whitespace
+
+    If oneline is True, all newlines will be replaced with spaces.
+    Tabs or spaces in the middle of a line are not touched.
+
+    This lets one format prompts neatly without affecting what the model sees.
+    """
+    text = dedent(text).strip()
+    if oneline:
+        text.replace("\n", " ")
+    return text

@@ -33,10 +33,13 @@ class TestBBQPrompts(unittest.TestCase):
         return format_messages(self.PROMPT_MODULE.POSTAMBLE_COT, self.SAMPLE)
 
     def check_whitespace(self, messages: Messages) -> None:
-        """Check that messages don't start or end with whitespace"""
         for msg in messages:
+            # Check that messages don't start or end with whitespace
             self.assertNotIn(msg.content[0], string.whitespace)
             self.assertNotIn(msg.content[-1], string.whitespace)
+            # Check that there aren't multiple consecutive spaces, which would be
+            # indicative of an indentation issue
+            self.assertNotIn("  ", msg.content)
 
     def check_preamble_contents(self, preamble: Message) -> None:
         self.assertIn(self.SAMPLE.parameters.context, preamble.content)
