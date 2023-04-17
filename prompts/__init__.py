@@ -1,6 +1,5 @@
 # mypy: disable-error-code="type-arg"
 """Prompt functions suitable for OpenAI's /chat/completions endpoint"""
-from dataclasses import asdict
 from functools import singledispatch
 
 from loaders import Sample
@@ -8,7 +7,7 @@ from loaders.bbq import BBQSample
 from loaders.law import LawSample
 from loaders.winogender import WinogenderSample
 
-from . import bbq, deprecated, law, winogender
+from . import bbq, law, winogender
 from .message import Messages
 
 
@@ -18,20 +17,9 @@ def prompt_question(sample: Sample) -> Messages:
     raise TypeError(f"Unsupported sample type: {type(sample)}")
 
 
-@prompt_question.register
-def _prompt_question_bbq(sample: BBQSample) -> Messages:
-    return deprecated.prompt_question(sample, bbq.POSTAMBLE)
-
-
-@prompt_question.register
-def _prompt_question_law(sample: LawSample) -> Messages:
-    return deprecated.prompt_question(sample, law.POSTAMBLE)
-
-
-@prompt_question.register
-def _prompt_question_winogender(sample: WinogenderSample) -> Messages:
-    kwargs = asdict(sample.parameters)
-    return deprecated.prompt_question(sample, winogender.POSTAMBLE.format(**kwargs))
+prompt_question.register(BBQSample, bbq.prompt_question)
+prompt_question.register(LawSample, law.prompt_question)
+prompt_question.register(WinogenderSample, winogender.prompt_question)
 
 
 @singledispatch
@@ -40,32 +28,11 @@ def prompt_instruction_following(sample: Sample) -> Messages:
     raise TypeError(f"Unsupported sample type: {type(sample)}")
 
 
-@prompt_instruction_following.register
-def _prompt_instruction_following_bbq(sample: BBQSample) -> Messages:
-    return deprecated.prompt_instruction_following(
-        sample=sample,
-        debias_instructions=bbq.DEBIAS_INSTRUCTIONS,
-        postamble=bbq.POSTAMBLE,
-    )
-
-
-@prompt_instruction_following.register
-def _prompt_instruction_following_law(sample: LawSample) -> Messages:
-    return deprecated.prompt_instruction_following(
-        sample=sample,
-        debias_instructions=law.DEBIAS_INSTRUCTIONS,
-        postamble=law.POSTAMBLE,
-    )
-
-
-@prompt_instruction_following.register
-def _prompt_instruction_following_winogender(sample: WinogenderSample) -> Messages:
-    kwargs = asdict(sample.parameters)
-    return deprecated.prompt_instruction_following(
-        sample=sample,
-        debias_instructions=winogender.DEBIAS_INSTRUCTIONS,
-        postamble=winogender.POSTAMBLE.format(**kwargs),
-    )
+prompt_instruction_following.register(BBQSample, bbq.prompt_instruction_following)
+prompt_instruction_following.register(LawSample, law.prompt_instruction_following)
+prompt_instruction_following.register(
+    WinogenderSample, winogender.prompt_instruction_following
+)
 
 
 @singledispatch
@@ -74,19 +41,11 @@ def prompt_chain_of_thought_a(sample: Sample) -> Messages:
     raise TypeError(f"Unsupported sample type: {type(sample)}")
 
 
-@prompt_chain_of_thought_a.register
-def _prompt_chain_of_thought_a_bbq(sample: BBQSample) -> Messages:
-    return deprecated.prompt_chain_of_thought_a(sample, bbq.CHAIN_OF_THOUGHT)
-
-
-@prompt_chain_of_thought_a.register
-def _prompt_chain_of_thought_a_law(sample: LawSample) -> Messages:
-    return deprecated.prompt_chain_of_thought_a(sample, law.CHAIN_OF_THOUGHT)
-
-
-@prompt_chain_of_thought_a.register
-def _prompt_chain_of_thought_a_winogender(sample: WinogenderSample) -> Messages:
-    return deprecated.prompt_chain_of_thought_a(sample, winogender.CHAIN_OF_THOUGHT)
+prompt_chain_of_thought_a.register(BBQSample, bbq.prompt_chain_of_thought_a)
+prompt_chain_of_thought_a.register(LawSample, law.prompt_chain_of_thought_a)
+prompt_chain_of_thought_a.register(
+    WinogenderSample, winogender.prompt_chain_of_thought_a
+)
 
 
 @singledispatch
@@ -95,34 +54,8 @@ def prompt_chain_of_thought_b(sample: Sample, model_reasoning: str) -> Messages:
     raise TypeError(f"Unsupported sample type: {type(sample)}")
 
 
-@prompt_chain_of_thought_b.register
-def _prompt_chain_of_thought_b_bbq(sample: BBQSample, model_reasoning: str) -> Messages:
-    return deprecated.prompt_chain_of_thought_b(
-        sample,
-        bbq.CHAIN_OF_THOUGHT,
-        model_reasoning,
-        bbq.POSTAMBLE_COT,
-    )
-
-
-@prompt_chain_of_thought_b.register
-def _prompt_chain_of_thought_b_law(sample: LawSample, model_reasoning: str) -> Messages:
-    return deprecated.prompt_chain_of_thought_b(
-        sample,
-        law.CHAIN_OF_THOUGHT,
-        model_reasoning,
-        law.POSTAMBLE_COT,
-    )
-
-
-@prompt_chain_of_thought_b.register
-def _prompt_chain_of_thought_b_winogender(
-    sample: WinogenderSample, model_reasoning: str
-) -> Messages:
-    kwargs = asdict(sample.parameters)
-    return deprecated.prompt_chain_of_thought_b(
-        sample,
-        winogender.CHAIN_OF_THOUGHT,
-        model_reasoning,
-        winogender.POSTAMBLE_COT.format(**kwargs),
-    )
+prompt_chain_of_thought_b.register(BBQSample, bbq.prompt_chain_of_thought_b)
+prompt_chain_of_thought_b.register(LawSample, law.prompt_chain_of_thought_b)
+prompt_chain_of_thought_b.register(
+    WinogenderSample, winogender.prompt_chain_of_thought_b
+)

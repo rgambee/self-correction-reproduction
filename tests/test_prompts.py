@@ -6,7 +6,6 @@ from typing import cast
 import prompts
 from loaders import Sample
 from prompts import bbq, law, winogender
-from prompts.deprecated import format_preamble
 from prompts.message import Message, Messages
 from tests.utils import BBQ_SAMPLE, LAW_SAMPLE, WINOGENDER_SAMPLE
 
@@ -56,6 +55,7 @@ class TestBBQPrompts(unittest.TestCase):
 
     def test_preamble(self) -> None:
         """Test that the preamble is formatted correctly"""
+        format_preamble = getattr(self.PROMPT_MODULE, "format_preamble")
         messages = format_preamble(self.SAMPLE)
         self.check_whitespace(messages)
         self.check_preamble_contents(messages[0])
