@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass, replace
-from typing import Any, List, Literal
+from typing import Any, List, Literal, Sequence
 
 from loaders import Sample
 
@@ -16,7 +16,7 @@ class Message:
         return cls(role, content.format(**kwargs))
 
 
-Messages = List[Message]
+Messages = Sequence[Message]
 
 
 def format_messages(
@@ -25,7 +25,7 @@ def format_messages(
 ) -> Messages:
     kwargs = asdict(sample)
     kwargs.update(asdict(sample.parameters))
-    formatted: Messages = []
+    formatted: List[Message] = []
     for msg in messages:
         formatted.append(replace(msg, content=msg.content.format(**kwargs)))
-    return formatted
+    return tuple(formatted)
