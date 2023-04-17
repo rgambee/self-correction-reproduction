@@ -42,9 +42,11 @@ def create_mock_response(**kwargs: Any) -> Dict[str, Any]:
         "model": "davinci",
         "choices": [
             {
-                "text": "This is a test",
+                "message": {
+                    "role": "assistant",
+                    "content": "This is a test",
+                },
                 "index": 0,
-                "logprobs": None,
                 "finish_reason": "length",
             }
         ],
@@ -53,7 +55,7 @@ def create_mock_response(**kwargs: Any) -> Dict[str, Any]:
     return response
 
 
-@patch("openai.Completion.acreate", return_value=create_mock_response())
+@patch("openai.ChatCompletion.acreate", return_value=create_mock_response())
 class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
     async def test_request_submission(self, mock_api: MagicMock) -> None:
         """Test that a request is sent to the API in the proper format"""
@@ -61,7 +63,10 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
         mock_prompt = "This is a test"
         request = Request(prompt=mock_prompt, parameters=mock_params, sample=LAW_SAMPLE)
         await request.submit()
-        mock_api.assert_called_once_with(prompt=mock_prompt, **asdict(mock_params))
+        mock_api.assert_called_once_with(
+            messages=[{"role": "user", "content": mock_prompt}],
+            **asdict(mock_params),
+        )
 
     async def test_response_handling(self, mock_api: MagicMock) -> None:
         """Test that API responses are parsed and saved correctly"""
@@ -136,7 +141,9 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                     mock_api.mock_calls,
                     [
                         call(
-                            prompt=prompt_question(samp),
+                            messages=[
+                                {"role": "user", "content": prompt_question(samp)}
+                            ],
                             **asdict(mock_params),
                         )
                         for samp in samples
