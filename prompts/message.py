@@ -1,5 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Any, List, Literal
+
+from loaders import Sample
 
 Role = Literal["assistant", "system", "user"]
 
@@ -15,3 +17,15 @@ class Message:
 
 
 Messages = List[Message]
+
+
+def format_messages(
+    messages: Messages,
+    sample: Sample,  # type: ignore[type-arg]
+) -> Messages:
+    kwargs = asdict(sample)
+    kwargs.update(asdict(sample.parameters))
+    formatted: Messages = []
+    for msg in messages:
+        formatted.append(replace(msg, content=msg.content.format(**kwargs)))
+    return formatted
