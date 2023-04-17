@@ -1,7 +1,6 @@
 import string
 import unittest
 from dataclasses import asdict
-from typing import cast
 
 import prompts
 from loaders import Sample
@@ -16,26 +15,26 @@ class TestBBQPrompts(unittest.TestCase):
 
     @property
     def preamble(self) -> str:
-        format_string = cast(str, getattr(self.PROMPT_MODULE, "PREAMBLE"))
+        format_string = self.PROMPT_MODULE.PREAMBLE
         kwargs = asdict(self.SAMPLE)
         kwargs.update(asdict(self.SAMPLE.parameters))
         return format_string.format(**kwargs)
 
     @property
     def debias_instructions(self) -> str:
-        return cast(str, getattr(self.PROMPT_MODULE, "DEBIAS_INSTRUCTIONS"))
+        return self.PROMPT_MODULE.DEBIAS_INSTRUCTIONS
 
     @property
     def chain_of_thought(self) -> str:
-        return cast(str, getattr(self.PROMPT_MODULE, "CHAIN_OF_THOUGHT"))
+        return self.PROMPT_MODULE.CHAIN_OF_THOUGHT
 
     @property
     def postamble(self) -> str:
-        return cast(str, getattr(self.PROMPT_MODULE, "POSTAMBLE"))
+        return self.PROMPT_MODULE.POSTAMBLE
 
     @property
     def postamble_cot(self) -> str:
-        return cast(str, getattr(self.PROMPT_MODULE, "POSTAMBLE_COT"))
+        return self.PROMPT_MODULE.POSTAMBLE_COT
 
     def check_whitespace(self, messages: Messages) -> None:
         """Check that messages don't start or end with whitespace"""
@@ -124,12 +123,12 @@ class TestWinogenderPrompts(TestBBQPrompts):
 
     @property
     def postamble(self) -> str:
-        format_string = cast(str, getattr(self.PROMPT_MODULE, "POSTAMBLE"))
+        format_string = self.PROMPT_MODULE.POSTAMBLE
         return format_string.format(**asdict(self.SAMPLE.parameters))
 
     @property
     def postamble_cot(self) -> str:
-        format_string = cast(str, getattr(self.PROMPT_MODULE, "POSTAMBLE_COT"))
+        format_string = self.PROMPT_MODULE.POSTAMBLE_COT
         return format_string.format(**asdict(self.SAMPLE.parameters))
 
     def check_preamble_contents(self, preamble: Message) -> None:
