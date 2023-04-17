@@ -5,12 +5,7 @@ from typing import Any, Generic, Optional, Sequence, Type, TypeVar
 import openai
 
 from loaders import P, Sample
-
-
-@dataclass
-class Message:
-    role: str
-    content: str
+from prompts import Message, Messages
 
 
 @dataclass
@@ -64,13 +59,13 @@ class Request(Generic[P]):
     """
 
     parameters: RequestParameters
-    prompt: str
+    messages: Messages
     sample: Sample[P]
 
     async def submit(self) -> Reply:
         """Submit this request to the OpenAI API and return the reply"""
         resp = await openai.ChatCompletion.acreate(  # type: ignore[no-untyped-call]
-            messages=[{"role": "user", "content": self.prompt}],
+            messages=[asdict(msg) for msg in self.messages],
             **asdict(self.parameters),
         )
         return Reply(**resp)
@@ -81,7 +76,7 @@ class Result(Generic[P]):
     """A combined sample and reply"""
 
     sample: Sample[P]
-    prompt: str
+    prompt_messages: Messages
     reply: Reply
 
 

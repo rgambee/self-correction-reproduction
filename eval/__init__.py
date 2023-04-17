@@ -8,12 +8,13 @@ import jsonlines
 from eval.classes import Request, RequestParameters, Result
 from eval.processing import process_requests, process_results, process_samples
 from loaders import P, Sample
+from prompts import Messages
 
 
 # pylint: disable-next=too-many-arguments
 async def evaluate_dataset(
     samples: Iterable[Sample[P]],
-    prompt_func: Callable[[Sample[P]], str],
+    prompt_func: Callable[[Sample[P]], Messages],
     results_file: Path,
     parameters: RequestParameters,
     max_requests_per_min: float,

@@ -14,12 +14,13 @@ import openai
 
 from eval.classes import Request, RequestParameters, Result
 from loaders import P, Sample
+from prompts import Messages
 
 
 # pylint: disable-next=too-many-arguments
 async def process_samples(
     samples: Iterable[Sample[P]],
-    prompt_func: Callable[[Sample[P]], str],
+    prompt_func: Callable[[Sample[P]], Messages],
     parameters: RequestParameters,
     requests_queue: asyncio.Queue[Request[P]],
     max_requests_per_min: float,
@@ -57,8 +58,8 @@ async def process_samples(
             if available_requests >= 1.0:
                 break
             await asyncio.sleep(min(1.0 / max_requests_per_sec, 0.1))
-        prompt = prompt_func(sample)
-        request = Request(parameters=parameters, prompt=prompt, sample=sample)
+        messages = prompt_func(sample)
+        request = Request(parameters=parameters, messages=messages, sample=sample)
         await requests_queue.put(request)
         available_requests = max(available_requests - 1.0, 0.0)
 
@@ -92,7 +93,11 @@ async def process_requests(
         else:
             requests_queue.task_done()
             await results_queue.put(
-                Result(sample=request.sample, prompt=request.prompt, reply=reply)
+                Result(
+                    sample=request.sample,
+                    prompt_messages=request.messages,
+                    reply=reply,
+                )
             )
 
 

@@ -5,7 +5,7 @@ from typing import cast
 
 import prompts
 from loaders import Sample
-from prompts import bbq, law, winogender
+from prompts import Message, Messages, bbq, law, winogender
 from tests.utils import BBQ_SAMPLE, LAW_SAMPLE, WINOGENDER_SAMPLE
 
 
@@ -36,77 +36,81 @@ class TestBBQPrompts(unittest.TestCase):
     def postamble_cot(self) -> str:
         return cast(str, getattr(self.PROMPT_MODULE, "POSTAMBLE_COT"))
 
-    def check_whitespace(self, text: str) -> None:
-        # The first character should be a newline,
-        # and the last character should not be whitespace.
-        self.assertEqual(text[0], "\n")
-        self.assertNotIn(text[-1], string.whitespace)
+    def check_whitespace(self, messages: Messages) -> None:
+        """Check that messages don't start or end with whitespace"""
+        for msg in messages:
+            self.assertNotIn(msg.content[0], string.whitespace)
+            self.assertNotIn(msg.content[-1], string.whitespace)
 
-    def check_preamble_contents(self, preamble: str) -> None:
-        self.assertIn(self.SAMPLE.parameters.context, preamble)
-        self.assertIn(self.SAMPLE.parameters.question, preamble)
+    def check_preamble_contents(self, preamble: Message) -> None:
+        self.assertIn(self.SAMPLE.parameters.context, preamble.content)
+        self.assertIn(self.SAMPLE.parameters.question, preamble.content)
+
+    def search_messages(self, messages: Messages, text: str) -> bool:
+        for msg in messages:
+            if text in msg.content:
+                return True
+        return False
 
     def test_preamble(self) -> None:
         """Test that the preamble is formatted correctly"""
-        preamble = prompts.format_preamble(self.SAMPLE)
-        # The preamble shouldn't have any leading or trailing whitespace
-        self.assertEqual(preamble, preamble.strip())
-        # Condense to one line to make is easier to search for a substring
-        preamble = preamble.replace("\n", " ")
-        self.check_preamble_contents(preamble)
+        messages = prompts.format_preamble(self.SAMPLE)
+        self.check_whitespace(messages)
+        self.check_preamble_contents(messages[0])
 
     def test_question(self) -> None:
         """Test that the plain question prompt contains the expected text"""
-        prompt = prompts.prompt_question(self.SAMPLE)
-        self.check_whitespace(prompt)
-        self.assertIn(self.preamble, prompt)
-        self.assertNotIn(self.debias_instructions, prompt)
-        self.assertNotIn(self.chain_of_thought, prompt)
-        self.assertIn(self.postamble, prompt)
-        self.assertNotIn(self.postamble_cot, prompt)
+        messages = prompts.prompt_question(self.SAMPLE)
+        self.check_whitespace(messages)
+        self.assertTrue(self.search_messages(messages, self.preamble))
+        self.assertFalse(self.search_messages(messages, self.debias_instructions))
+        self.assertFalse(self.search_messages(messages, self.chain_of_thought))
+        self.assertTrue(self.search_messages(messages, self.postamble))
+        self.assertFalse(self.search_messages(messages, self.postamble_cot))
 
     def test_instruction_following(self) -> None:
         """Test that the instruction-following prompt contains the expected text"""
-        prompt = prompts.prompt_instruction_following(self.SAMPLE)
-        self.check_whitespace(prompt)
-        self.assertIn(self.preamble, prompt)
-        self.assertIn(self.debias_instructions, prompt)
-        self.assertNotIn(self.chain_of_thought, prompt)
-        self.assertIn(self.postamble, prompt)
-        self.assertNotIn(self.postamble_cot, prompt)
+        messages = prompts.prompt_instruction_following(self.SAMPLE)
+        self.check_whitespace(messages)
+        self.assertTrue(self.search_messages(messages, self.preamble))
+        self.assertTrue(self.search_messages(messages, self.debias_instructions))
+        self.assertFalse(self.search_messages(messages, self.chain_of_thought))
+        self.assertTrue(self.search_messages(messages, self.postamble))
+        self.assertFalse(self.search_messages(messages, self.postamble_cot))
 
     def test_chain_of_thought(self) -> None:
         """Test that the chain-of-thought prompt contains the expected text"""
-        prompt = prompts.prompt_chain_of_thought_a(self.SAMPLE)
-        self.check_whitespace(prompt)
-        self.assertIn(self.preamble, prompt)
-        self.assertNotIn(self.debias_instructions, prompt)
-        self.assertIn(self.chain_of_thought, prompt)
-        self.assertNotIn(self.postamble, prompt)
-        self.assertNotIn(self.postamble_cot, prompt)
+        messages = prompts.prompt_chain_of_thought_a(self.SAMPLE)
+        self.check_whitespace(messages)
+        self.assertTrue(self.search_messages(messages, self.preamble))
+        self.assertFalse(self.search_messages(messages, self.debias_instructions))
+        self.assertTrue(self.search_messages(messages, self.chain_of_thought))
+        self.assertFalse(self.search_messages(messages, self.postamble))
+        self.assertFalse(self.search_messages(messages, self.postamble_cot))
 
         reasoning = "I should answer this question correctly."
-        prompt = prompts.prompt_chain_of_thought_b(self.SAMPLE, reasoning)
-        self.check_whitespace(prompt)
-        self.assertIn(self.preamble, prompt)
-        self.assertNotIn(self.debias_instructions, prompt)
-        self.assertIn(self.chain_of_thought, prompt)
-        self.assertNotIn(self.postamble, prompt)
-        self.assertIn(self.postamble_cot, prompt)
-        self.assertIn(reasoning, prompt, prompt)
+        messages = prompts.prompt_chain_of_thought_b(self.SAMPLE, reasoning)
+        self.check_whitespace(messages)
+        self.assertTrue(self.search_messages(messages, self.preamble))
+        self.assertFalse(self.search_messages(messages, self.debias_instructions))
+        self.assertTrue(self.search_messages(messages, self.chain_of_thought))
+        self.assertFalse(self.search_messages(messages, self.postamble))
+        self.assertTrue(self.search_messages(messages, self.postamble_cot))
+        self.assertTrue(self.search_messages(messages, reasoning))
 
 
 class TestLawPrompts(TestBBQPrompts):
     PROMPT_MODULE = law
     SAMPLE = LAW_SAMPLE
 
-    def check_preamble_contents(self, preamble: str) -> None:
+    def check_preamble_contents(self, preamble: Message) -> None:
         self.assertIn(
             (
                 "The first student is a Other female with a raw LSAT score of 39.0 "
                 "and an undergraduate GPA of 3.1."
             ),
-            preamble,
+            # Condense to one line to make is easier to search for a substring
+            preamble.content.replace("\n", " "),
         )
 
 
@@ -124,37 +128,38 @@ class TestWinogenderPrompts(TestBBQPrompts):
         format_string = cast(str, getattr(self.PROMPT_MODULE, "POSTAMBLE_COT"))
         return format_string.format(**asdict(self.SAMPLE.parameters))
 
-    def check_preamble_contents(self, preamble: str) -> None:
+    def check_preamble_contents(self, preamble: Message) -> None:
         self.assertIn(
             "The technician told the customer that _ had completed the repair.",
-            preamble,
+            preamble.content,
         )
 
     def test_question(self) -> None:
         """Test that the plain question prompt contains the expected text"""
-        prompt = prompts.prompt_question(self.SAMPLE)
-        self.check_whitespace(prompt)
-        self.assertIn(self.preamble, prompt)
-        self.assertNotIn(self.debias_instructions, prompt)
-        self.assertNotIn(self.chain_of_thought, prompt)
-        self.assertIn(self.postamble, prompt)
+        messages = prompts.prompt_question(self.SAMPLE)
+        self.check_whitespace(messages)
+        self.assertTrue(self.search_messages(messages, self.preamble))
+        self.assertFalse(self.search_messages(messages, self.debias_instructions))
+        self.assertFalse(self.search_messages(messages, self.chain_of_thought))
+        self.assertTrue(self.search_messages(messages, self.postamble))
 
     def test_instruction_following(self) -> None:
         """Test that the instruction-following prompt contains the expected text"""
-        prompt = prompts.prompt_instruction_following(self.SAMPLE)
-        self.check_whitespace(prompt)
-        self.assertIn(self.preamble, prompt)
-        self.assertIn(self.debias_instructions, prompt)
-        self.assertNotIn(self.chain_of_thought, prompt)
-        self.assertIn(self.postamble, prompt)
+        messages = prompts.prompt_instruction_following(self.SAMPLE)
+        self.check_whitespace(messages)
+        self.assertTrue(self.search_messages(messages, self.preamble))
+        self.assertTrue(self.search_messages(messages, self.debias_instructions))
+        self.assertFalse(self.search_messages(messages, self.chain_of_thought))
+        self.assertTrue(self.search_messages(messages, self.postamble))
 
     def test_chain_of_thought(self) -> None:
         """Test that the chain-of-thought prompt contains the expected text"""
-        prompt = prompts.prompt_chain_of_thought_a(self.SAMPLE)
-        self.check_whitespace(prompt)
-        self.assertIn(self.preamble, prompt)
-        self.assertNotIn(self.debias_instructions, prompt)
-        self.assertIn(self.chain_of_thought, prompt)
+        messages = prompts.prompt_chain_of_thought_a(self.SAMPLE)
+        self.check_whitespace(messages)
+        self.assertTrue(self.search_messages(messages, self.preamble))
+        self.assertFalse(self.search_messages(messages, self.debias_instructions))
+        self.assertTrue(self.search_messages(messages, self.chain_of_thought))
+        self.assertTrue(self.search_messages(messages, self.postamble_cot))
 
 
 if __name__ == "__main__":

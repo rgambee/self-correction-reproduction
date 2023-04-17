@@ -13,7 +13,7 @@ from eval import evaluate_dataset, find_most_recent_sample
 from eval.classes import Request, RequestParameters
 from eval.processing import process_samples
 from loaders.law import LawLoader, LawParameters, LawSample
-from prompts import prompt_question
+from prompts import Message, prompt_question
 from tests.test_loaders import TestLawLoader
 from tests.utils import LAW_SAMPLE, make_temp_file, write_dummy_dataset
 
@@ -57,26 +57,30 @@ def create_mock_response(**kwargs: Any) -> Dict[str, Any]:
 
 @patch("openai.ChatCompletion.acreate", return_value=create_mock_response())
 class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
+    DUMMY_PROMPT_MESSAGES = [Message(role="system", content="This is a test")]
+
     async def test_request_submission(self, mock_api: MagicMock) -> None:
         """Test that a request is sent to the API in the proper format"""
         mock_params = create_mock_params()
-        mock_prompt = "This is a test"
-        request = Request(prompt=mock_prompt, parameters=mock_params, sample=LAW_SAMPLE)
+        request = Request(
+            messages=self.DUMMY_PROMPT_MESSAGES,
+            parameters=mock_params,
+            sample=LAW_SAMPLE,
+        )
         await request.submit()
         mock_api.assert_called_once_with(
-            messages=[{"role": "user", "content": mock_prompt}],
+            messages=[asdict(msg) for msg in self.DUMMY_PROMPT_MESSAGES],
             **asdict(mock_params),
         )
 
     async def test_response_handling(self, mock_api: MagicMock) -> None:
         """Test that API responses are parsed and saved correctly"""
         mock_params = create_mock_params()
-        mock_prompt = "This is a test"
         mock_sample = LAW_SAMPLE
         with make_temp_file() as temp_output:
             await evaluate_dataset(
                 samples=[mock_sample],
-                prompt_func=lambda s: mock_prompt,
+                prompt_func=lambda s: self.DUMMY_PROMPT_MESSAGES,
                 results_file=temp_output,
                 parameters=mock_params,
                 max_requests_per_min=100.0,
@@ -89,6 +93,11 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(results["sample"], asdict(mock_sample))
         self.assertIn("reply", results)
         self.assertEqual(results["reply"], mock_api.return_value)
+        self.assertIn("prompt_messages", results)
+        self.assertEqual(
+            results["prompt_messages"],
+            [asdict(msg) for msg in self.DUMMY_PROMPT_MESSAGES],
+        )
 
     async def test_response_error(self, mock_api: MagicMock) -> None:
         """Test that API errors propagated to caller"""
@@ -141,9 +150,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                     mock_api.mock_calls,
                     [
                         call(
-                            messages=[
-                                {"role": "user", "content": prompt_question(samp)}
-                            ],
+                            messages=[asdict(msg) for msg in prompt_question(samp)],
                             **asdict(mock_params),
                         )
                         for samp in samples
@@ -159,9 +166,10 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                         )
                         loaded_sample = LawSample(**result["sample"])
                         self.assertEqual(loaded_sample, samples[result_index])
-                        self.assertIn("prompt", result)
+                        self.assertIn("prompt_messages", result)
                         self.assertEqual(
-                            result["prompt"], prompt_question(loaded_sample)
+                            result["prompt_messages"],
+                            [asdict(msg) for msg in prompt_question(loaded_sample)],
                         )
                         self.assertIn("reply", result)
                         self.assertEqual(result["reply"], mock_api.return_value)
@@ -171,7 +179,6 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
     async def test_resume(self, mock_api: MagicMock) -> None:
         """Test that the dataset is resumed from the last sample"""
         mock_params = create_mock_params()
-        mock_prompt = "This is a test"
         with write_dummy_dataset(TestLawLoader.DUMMY_DATA) as temp_input:
             loader = LawLoader(temp_input)
             samples = list(loader)
@@ -182,7 +189,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                     file.write("\n")
                 await evaluate_dataset(
                     samples=samples,
-                    prompt_func=lambda s: mock_prompt,
+                    prompt_func=lambda s: self.DUMMY_PROMPT_MESSAGES,
                     results_file=temp_output,
                     parameters=mock_params,
                     max_requests_per_min=100.0,
@@ -203,7 +210,6 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
     async def test_rate_limit(self, mock_time: MagicMock, _: MagicMock) -> None:
         """Test that the request rate limit is enforced"""
         mock_params = create_mock_params()
-        mock_prompt = "This is a test"
         max_requests_per_min = 1.0
         request_interval_s = 1.0 / (max_requests_per_min / 60.0)
         timeout_s = 0.1
@@ -211,7 +217,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
         task = asyncio.create_task(
             process_samples(
                 samples=[LAW_SAMPLE] * 2,
-                prompt_func=lambda s: mock_prompt,
+                prompt_func=lambda s: self.DUMMY_PROMPT_MESSAGES,
                 parameters=mock_params,
                 requests_queue=requests_queue,
                 max_requests_per_min=max_requests_per_min,
