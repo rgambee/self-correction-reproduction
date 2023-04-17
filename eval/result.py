@@ -1,8 +1,6 @@
 from collections import abc
-from dataclasses import asdict, dataclass
-from typing import Any, Generic, Optional, Sequence, Type, TypeVar
-
-import openai
+from dataclasses import dataclass
+from typing import Any, Generic, Sequence, Type, TypeVar
 
 from loaders import P, Sample
 from prompts import Message, Messages
@@ -39,35 +37,6 @@ class Reply:
         self.choices = [
             dataclass_from_mapping_or_iterable(Completion, chc) for chc in self.choices
         ]
-
-
-@dataclass
-class RequestParameters:
-    model: str
-    max_tokens: int
-    temperature: float
-    timeout: Optional[float] = None
-
-
-@dataclass
-class Request(Generic[P]):
-    """A request to the OpenAI API for a single sample
-
-    This uses the /chat/completions endpoint, so the specified model must support chat
-    completions. For instance, gpt-3.5-turbo or gpt-4.
-    """
-
-    parameters: RequestParameters
-    messages: Messages
-    sample: Sample[P]
-
-    async def submit(self) -> Reply:
-        """Submit this request to the OpenAI API and return the reply"""
-        resp = await openai.ChatCompletion.acreate(  # type: ignore[no-untyped-call]
-            messages=[asdict(msg) for msg in self.messages],
-            **asdict(self.parameters),
-        )
-        return Reply(**resp)
 
 
 @dataclass

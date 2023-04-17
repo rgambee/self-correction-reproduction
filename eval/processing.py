@@ -12,7 +12,8 @@ from typing import Any, Callable, Iterable, Optional
 import jsonlines
 import openai
 
-from eval.classes import Request, RequestParameters, Result
+from eval.request import Request, RequestParameters
+from eval.result import Result
 from loaders import P, Sample
 from prompts import Messages
 

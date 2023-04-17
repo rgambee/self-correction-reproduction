@@ -10,8 +10,8 @@ from typing import Any, Dict, Iterable, Iterator, Mapping, Union
 from unittest.mock import MagicMock, call, patch
 
 from eval import evaluate_dataset, find_most_recent_sample
-from eval.classes import Request, RequestParameters
 from eval.processing import process_samples
+from eval.request import Request, RequestParameters
 from loaders.law import LawLoader, LawParameters, LawSample
 from prompts import Message, prompt_question
 from tests.test_loaders import TestLawLoader

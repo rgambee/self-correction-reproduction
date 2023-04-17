@@ -5,8 +5,9 @@ from typing import Any, Callable, Iterable, List, Optional
 
 import jsonlines
 
-from eval.classes import Request, RequestParameters, Result
 from eval.processing import process_requests, process_results, process_samples
+from eval.request import Request, RequestParameters
+from eval.result import Result
 from loaders import P, Sample
 from prompts import Messages
 
