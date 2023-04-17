@@ -38,10 +38,7 @@ def _prompt_question(
     module: ModuleType,
 ) -> Messages:
     return format_messages(
-        messages=(
-            Message(role="user", content=module.PREAMBLE),
-            Message(role="user", content=module.POSTAMBLE),
-        ),
+        messages=module.PREAMBLE + module.POSTAMBLE,
         sample=sample,
     )
 
@@ -72,11 +69,7 @@ def _prompt_instruction_following(
     module: ModuleType,
 ) -> Messages:
     return format_messages(
-        messages=[
-            Message(role="user", content=module.PREAMBLE),
-            Message(role="user", content=module.DEBIAS_INSTRUCTIONS),
-            Message(role="user", content=module.POSTAMBLE),
-        ],
+        messages=module.PREAMBLE + module.DEBIAS_INSTRUCTIONS + module.POSTAMBLE,
         sample=sample,
     )
 
@@ -107,10 +100,7 @@ def _prompt_chain_of_thought_a(
     module: ModuleType,
 ) -> Messages:
     return format_messages(
-        messages=[
-            Message(role="user", content=module.PREAMBLE),
-            Message(role="assistant", content=module.CHAIN_OF_THOUGHT),
-        ],
+        messages=module.PREAMBLE + module.CHAIN_OF_THOUGHT,
         sample=sample,
     )
 
@@ -154,11 +144,11 @@ def _prompt_chain_of_thought_b(
     module: ModuleType,
 ) -> Messages:
     return format_messages(
-        messages=[
-            Message(role="user", content=module.PREAMBLE),
-            Message(role="assistant", content=module.CHAIN_OF_THOUGHT),
-            Message(role="assistant", content=model_reasoning),
-            Message(role="user", content=module.POSTAMBLE_COT),
-        ],
+        messages=(
+            module.PREAMBLE
+            + module.CHAIN_OF_THOUGHT
+            + (Message(role="assistant", content=model_reasoning),)
+            + module.POSTAMBLE_COT
+        ),
         sample=sample,
     )
