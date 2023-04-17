@@ -46,7 +46,6 @@ class RequestParameters:
     model: str
     max_tokens: int
     temperature: float
-    logprobs: int
     timeout: Optional[float] = None
 
 

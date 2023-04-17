@@ -22,14 +22,12 @@ def create_mock_params(
     model: str = "davinci",
     max_tokens: int = 256,
     temperature: float = 1.0,
-    logprobs: int = 1,
 ) -> RequestParameters:
     """Create a mock RequestParameters object suitable for testing"""
     return RequestParameters(
         model=model,
         temperature=temperature,
         max_tokens=max_tokens,
-        logprobs=logprobs,
     )
 
 
