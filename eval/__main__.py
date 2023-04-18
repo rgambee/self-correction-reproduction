@@ -25,6 +25,15 @@ PROMPTS = {
 }
 
 
+def configure_logging(verbose: bool) -> None:
+    logging_level = logging.INFO
+    if verbose:
+        logging_level = logging.DEBUG
+    logging.basicConfig(level=logging_level)
+    # Reduce OpenAI logging
+    logging.getLogger("openai").setLevel(logging.WARNING)
+
+
 def load_dataset(dataset_name: str) -> DatasetLoader[Any]:
     if dataset_name == BBQLoader.dataset:
         return BBQLoader(datasets.find_bbq_dataset())
@@ -109,11 +118,7 @@ async def main() -> None:
     )
     args = parser.parse_args()
 
-    logging_level = logging.INFO
-    if args.verbose:
-        logging_level = logging.DEBUG
-    logging.basicConfig(level=logging_level)
-
+    configure_logging(args.verbose)
     loader = load_dataset(args.dataset)
     prompt_func = PROMPTS[args.prompt]
     request_parameters = RequestParameters(
