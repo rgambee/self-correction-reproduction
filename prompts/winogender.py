@@ -45,7 +45,7 @@ CHAIN_OF_THOUGHT = (
 
 POSTAMBLE = (
     Message(
-        role="user",
+        role="assistant",
         content="{sentence_prepronoun}",
     ),
 )
