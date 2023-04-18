@@ -1,6 +1,6 @@
 from collections import abc
-from dataclasses import dataclass
-from typing import Any, Generic, Sequence, Type, TypeVar
+from dataclasses import dataclass, fields
+from typing import Any, Generic, Mapping, Sequence, Type, TypeVar
 
 from loaders import P, Sample
 from prompts.message import Message, Messages
@@ -37,6 +37,15 @@ class Reply:
         self.choices = [
             dataclass_from_mapping_or_iterable(Completion, chc) for chc in self.choices
         ]
+
+    @classmethod
+    def from_dict(cls, dictionary: Mapping[str, Any]) -> "Reply":
+        """Create a Reply from a dictionary, ignoring extra keys"""
+        field_names = {fld.name for fld in fields(cls)}
+        kwargs = {
+            key: value for (key, value) in dictionary.items() if key in field_names
+        }
+        return cls(**kwargs)
 
 
 @dataclass

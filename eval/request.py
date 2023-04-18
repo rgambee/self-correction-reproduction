@@ -34,4 +34,4 @@ class Request(Generic[P]):
             messages=[asdict(msg) for msg in self.messages],
             **asdict(self.parameters),
         )
-        return Reply(**resp)
+        return Reply.from_dict(resp)
