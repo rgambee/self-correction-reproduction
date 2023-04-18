@@ -77,6 +77,7 @@ async def evaluate_dataset(
         request_tasks=request_tasks,
         result_task=result_task,
         results_queue=results_queue,
+        timeout=parameters.timeout,
     )
 
 
@@ -102,11 +103,13 @@ def find_most_recent_sample(results_file: Path) -> Optional[int]:
     return last_id
 
 
+# pylint: disable-next=too-many-arguments
 async def wait_for_tasks_to_complete(
     sample_task: asyncio.Task[None],
     request_tasks: Iterable[asyncio.Task[None]],
     result_task: asyncio.Task[None],
     results_queue: asyncio.Queue[Result[P]],
+    timeout: Optional[float] = None,
 ) -> None:
     """Wait for all tasks to complete and handle any errors that occur"""
     logger = logging.getLogger(__name__)
@@ -142,13 +145,13 @@ async def wait_for_tasks_to_complete(
             # The result task is still running. Give it a moment to finish saving any
             # results still in the queue.
             try:
-                await asyncio.wait_for(results_queue.join(), timeout=1.0)
+                await asyncio.wait_for(results_queue.join(), timeout=timeout)
             except asyncio.TimeoutError:
                 logger.debug("Not all pending results were able to be saved")
         await stop_task(result_task)
 
 
-async def stop_task(task: asyncio.Task[Any], timeout: float = 1.0) -> None:
+async def stop_task(task: asyncio.Task[Any], timeout: Optional[float] = None) -> None:
     """Stop the given task gracefully by canceling it and waiting for it to finish"""
     logger = logging.getLogger(__name__)
     if not task.done():
