@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from dataclasses import asdict, is_dataclass
 from enum import Enum
 from functools import partial
@@ -79,15 +80,18 @@ async def process_requests(
 
     This coroutine runs until it is canceled.
     """
+    logger = logging.getLogger(__name__)
     while True:
         try:
             request = requests_queue.get_nowait()
         except asyncio.QueueEmpty:
             await asyncio.sleep(0.1)
             continue
+        logger.debug("Submitting request for sample %d", request.sample.id)
         try:
             reply = await request.submit()
         except openai.error.RateLimitError:
+            logging.warning("Rate limit exceeded, sleeping before retrying...")
             await requests_queue.put(request)
             await asyncio.sleep(rate_limit_sleep)
             continue
@@ -114,6 +118,7 @@ async def process_results(
 
     This coroutine runs until it is canceled.
     """
+    logger = logging.getLogger(__name__)
     with jsonlines.open(
         results_file,
         mode="a",
@@ -127,6 +132,7 @@ async def process_results(
                 continue
             output.write(result)
             results_queue.task_done()
+            logger.debug("Saved result for sample %d", result.sample.id)
 
 
 def to_json_serializable_type(value: Any) -> Any:
