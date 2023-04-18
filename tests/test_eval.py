@@ -6,7 +6,7 @@ import unittest
 from contextlib import contextmanager
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, Mapping, Union
+from typing import Any, Dict, Iterable, Iterator, Mapping, Optional, Union
 from unittest.mock import MagicMock, call, patch
 
 from eval import evaluate_dataset, find_most_recent_sample
@@ -23,12 +23,14 @@ def create_mock_params(
     model: str = "davinci",
     max_tokens: int = 256,
     temperature: float = 1.0,
+    timeout: Optional[float] = 1.0,
 ) -> RequestParameters:
     """Create a mock RequestParameters object suitable for testing"""
     return RequestParameters(
         model=model,
         temperature=temperature,
         max_tokens=max_tokens,
+        timeout=timeout,
     )
 
 
@@ -107,7 +109,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                     samples=[LAW_SAMPLE],
                     prompt_func=prompt_question,
                     results_file=Path(os.devnull),
-                    parameters=create_mock_params(),
+                    parameters=create_mock_params(timeout=0.25),
                     max_requests_per_min=100.0,
                     num_workers=1,
                 )
@@ -119,7 +121,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                     samples=[LAW_SAMPLE],
                     prompt_func=prompt_question,
                     results_file=Path(os.devnull),
-                    parameters=create_mock_params(),
+                    parameters=create_mock_params(timeout=0.25),
                     max_requests_per_min=100.0,
                     num_workers=1,
                 )

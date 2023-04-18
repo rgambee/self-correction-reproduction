@@ -76,6 +76,7 @@ async def evaluate_dataset(
         sample_task=sample_task,
         request_tasks=request_tasks,
         result_task=result_task,
+        requests_queue=requests_queue,
         results_queue=results_queue,
         timeout=parameters.timeout,
     )
@@ -108,6 +109,7 @@ async def wait_for_tasks_to_complete(
     sample_task: asyncio.Task[None],
     request_tasks: Iterable[asyncio.Task[None]],
     result_task: asyncio.Task[None],
+    requests_queue: asyncio.Queue[Request[P]],
     results_queue: asyncio.Queue[Result[P]],
     timeout: Optional[float] = None,
 ) -> None:
@@ -139,6 +141,11 @@ async def wait_for_tasks_to_complete(
     finally:
         # Shut things down from upstream to downstream to avoid information being lost
         await stop_task(sample_task)
+        try:
+            await asyncio.wait_for(requests_queue.join(), timeout=timeout)
+        except asyncio.TimeoutError:
+            logger.debug("Timed out while waiting for pending requests to be sent")
+
         for task in request_tasks:
             await stop_task(sample_task)
         if not result_task.done():
