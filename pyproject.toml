@@ -32,6 +32,10 @@ exclude = [
 # Check that code is compatible with Python 3.8 and later
 python_version = "3.8"
 
+[[tool.mypy.overrides]]
+module = "matplotlib.*"
+ignore_missing_imports = true
+
 [tool.pylint.main]
 # Discover python modules and packages in the file system subtree.
 recursive = true
