@@ -86,6 +86,17 @@ class TestLawLoader(TestLoader):
         loader = LawLoader(datasets.find_law_dataset())
         self.assertEqual(count_iterable(loader), 21791)
 
+    def test_parameter_override(self) -> None:
+        parameter_overrides = {
+            "region_first": "XX",
+            "sander_index": 1.234,
+        }
+        with write_dummy_dataset(self.DUMMY_DATA) as path:
+            loader = self.LOADER_CLASS(path, parameter_overrides)
+            for sample in loader:
+                for param, value in parameter_overrides.items():
+                    self.assertEqual(getattr(sample.parameters, param), value)
+
 
 class TestWinogenderLoader(TestLoader):
     DUMMY_DATA = [

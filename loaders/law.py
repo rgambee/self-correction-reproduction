@@ -1,7 +1,7 @@
 import csv
 from dataclasses import dataclass, fields
 from pathlib import Path
-from typing import Any, Iterator, Mapping
+from typing import Any, Iterable, Iterator, Mapping, Optional, Union
 
 from loaders import DatasetLoader, Sample
 
@@ -61,10 +61,19 @@ class LawLoader(DatasetLoader[LawParameters]):
 
     dataset = "law"
 
+    def __init__(
+        self,
+        paths: Union[Path, Iterable[Path]],
+        parameter_overrides: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        super().__init__(paths)
+        self.parameter_overrides = parameter_overrides or {}
+
     def _entry_to_sample(self, entry: Mapping[str, Any]) -> LawSample:
         """Transform a line from the law school dataset into a Sample"""
         param_dict = dict(entry)
         param_dict.pop("id")
+        param_dict.update(self.parameter_overrides)
         parameters = LawParameters(**param_dict)
         return LawSample(
             dataset=self.dataset,

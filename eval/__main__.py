@@ -2,14 +2,15 @@
 import argparse
 import asyncio
 import logging
+from itertools import chain
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import datasets
 import prompts
 from eval import evaluate_dataset
 from eval.request import RequestParameters
-from loaders import DatasetLoader
+from loaders import Sample
 from loaders.bbq import BBQLoader
 from loaders.law import LawLoader
 from loaders.winogender import WinogenderLoader
@@ -34,11 +35,18 @@ def configure_logging(verbose: bool) -> None:
     logging.getLogger("openai").setLevel(logging.WARNING)
 
 
-def load_dataset(dataset_name: str) -> DatasetLoader[Any]:
+def load_dataset(dataset_name: str) -> Iterable[Sample[Any]]:
+    """Load a dataset by name"""
     if dataset_name == BBQLoader.dataset:
         return BBQLoader(datasets.find_bbq_dataset())
     if dataset_name == LawLoader.dataset:
-        return LawLoader(datasets.find_law_dataset())
+        paths = datasets.find_law_dataset()
+        # For the law dataset, generate samples twice: once with race set to
+        # "Black" and again with race set to "White".
+        return chain.from_iterable(
+            LawLoader(paths, parameter_overrides={"race": race})
+            for race in ("Black", "White")
+        )
     if dataset_name == WinogenderLoader.dataset:
         loader = WinogenderLoader(datasets.find_winogender_dataset())
         loader.load_bls_data(datasets.find_winogender_stats())
