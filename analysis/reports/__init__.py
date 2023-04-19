@@ -14,15 +14,26 @@ from prompts.message import Message
 @dataclass
 class UserArguments:
     result_paths: Sequence[Path]
+    plot: bool
 
 
 def parse_args() -> UserArguments:
+    """Parse command line arguments
+
+    If no arguments are given (or the --help option is present), this will print out
+    usage information and then exit.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "result_paths",
         type=Path,
         nargs="+",
         help="Paths to JSONL files containing results",
+    )
+    parser.add_argument(
+        "--plot",
+        action="store_true",
+        help="Plot analysis metrics",
     )
     args = parser.parse_args()
     return UserArguments(**vars(args))
