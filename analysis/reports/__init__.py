@@ -1,12 +1,31 @@
+import argparse
 import logging
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator, List, Type
+from typing import Iterator, List, Sequence, Type
 
 import jsonlines
 
 from eval.result import Completion, Reply, Result
 from loaders import P, Sample
 from prompts.message import Message
+
+
+@dataclass
+class UserArguments:
+    result_paths: Sequence[Path]
+
+
+def parse_args() -> UserArguments:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "result_paths",
+        type=Path,
+        nargs="+",
+        help="Paths to JSONL files containing results",
+    )
+    args = parser.parse_args()
+    return UserArguments(**vars(args))
 
 
 # This function uses PascalCase for one of its parameters since it refers to a class,
