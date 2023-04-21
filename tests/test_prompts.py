@@ -208,6 +208,10 @@ class TestWhitespaceNormalization(unittest.TestCase):
             normalize_whitespace("\tfoo\n\tbar\n\tbaz", oneline=True),
             "foo bar baz",
         )
+        self.assertEqual(
+            normalize_whitespace("foo\r\nbar\r\nbaz", oneline=True),
+            "foo bar baz",
+        )
 
 
 if __name__ == "__main__":
