@@ -4,7 +4,7 @@ import unittest
 import prompts
 from loaders import Sample
 from prompts import bbq, law, winogender
-from prompts.message import Message, Messages, format_messages
+from prompts.message import Message, Messages, format_messages, normalize_whitespace
 from tests.utils import BBQ_SAMPLE, LAW_SAMPLE, WINOGENDER_SAMPLE
 
 
@@ -33,13 +33,17 @@ class TestBBQPrompts(unittest.TestCase):
         return format_messages(self.PROMPT_MODULE.POSTAMBLE_COT, self.SAMPLE)
 
     def check_whitespace(self, messages: Messages) -> None:
-        for msg in messages:
+        """Check that the whitespace of each message is formatted correctly"""
+        for i, msg in enumerate(messages):
             # Check that messages don't start or end with whitespace
             self.assertNotIn(msg.content[0], string.whitespace)
             self.assertNotIn(msg.content[-1], string.whitespace)
             # Check that there aren't multiple consecutive spaces, which would be
             # indicative of an indentation issue
             self.assertNotIn("  ", msg.content)
+            # Check that messages besides the preamble only a single line
+            if i != 0 or msg != self.preamble[0]:
+                self.assertNotIn("\n", msg.content)
 
     def check_preamble_contents(self, preamble: Message) -> None:
         self.assertIn(self.SAMPLE.parameters.context, preamble.content)
@@ -120,6 +124,89 @@ class TestWinogenderPrompts(TestBBQPrompts):
         self.assertIn(
             "The technician told the customer that _ had completed the repair.",
             preamble.content,
+        )
+
+
+class TestWhitespaceNormalization(unittest.TestCase):
+    def test_strip(self) -> None:
+        """Test that leading and trailing whitespace is removed"""
+        self.assertEqual(normalize_whitespace("  foo  "), "foo")
+        self.assertEqual(normalize_whitespace("\nfoo\n"), "foo")
+        self.assertEqual(normalize_whitespace("\tfoo\t"), "foo")
+        self.assertEqual(normalize_whitespace(" \r\n\t\f"), "")
+
+    def test_dedent(self) -> None:
+        """Test that leading whitespace is removed from each line"""
+        self.assertEqual(
+            normalize_whitespace(
+                """
+                foo
+                bar
+                baz
+                """,
+                oneline=False,
+            ),
+            "foo\nbar\nbaz",
+        )
+        self.assertEqual(
+            normalize_whitespace(
+                """
+                foo
+                  bar
+                    baz
+                """,
+                oneline=False,
+            ),
+            "foo\n  bar\n    baz",
+        )
+        self.assertEqual(
+            normalize_whitespace("foo\n  bar\n  baz", oneline=False),
+            "foo\n  bar\n  baz",
+        )
+        self.assertEqual(
+            normalize_whitespace("\tfoo\n    bar\n    baz", oneline=False),
+            "foo\n    bar\n    baz",
+        )
+        self.assertEqual(
+            normalize_whitespace("\tfoo\n\tbar\n\tbaz", oneline=False),
+            "foo\nbar\nbaz",
+        )
+
+    def test_oneline(self) -> None:
+        """Test that multiple lines are collapsed to one"""
+        self.assertEqual(
+            normalize_whitespace(
+                """
+                foo
+                bar
+                baz
+                """,
+                oneline=True,
+            ),
+            "foo bar baz",
+        )
+        self.assertEqual(
+            normalize_whitespace(
+                """
+                foo
+                  bar
+                    baz
+                """,
+                oneline=True,
+            ),
+            "foo   bar     baz",
+        )
+        self.assertEqual(
+            normalize_whitespace("foo\n  bar\n  baz", oneline=True),
+            "foo   bar   baz",
+        )
+        self.assertEqual(
+            normalize_whitespace("\tfoo\n    bar\n    baz", oneline=True),
+            "foo     bar     baz",
+        )
+        self.assertEqual(
+            normalize_whitespace("\tfoo\n\tbar\n\tbaz", oneline=True),
+            "foo bar baz",
         )
 
 

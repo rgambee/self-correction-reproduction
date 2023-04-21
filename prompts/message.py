@@ -42,5 +42,5 @@ def normalize_whitespace(text: str, oneline: bool = True) -> str:
     """
     text = dedent(text).strip()
     if oneline:
-        text.replace("\n", " ")
+        text = text.replace("\n", " ")
     return text
