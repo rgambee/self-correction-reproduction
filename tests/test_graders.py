@@ -3,13 +3,13 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict
 from typing import Iterable, Optional
 
-from analysis.graders import winogender
+from analysis.graders import law, winogender
 from analysis.graders.assessment import Assessment
 from eval.result import Completion, Reply, Result
 from loaders import P, Sample
 from prompts.message import Message
 
-from .utils import WINOGENDER_SAMPLE
+from .utils import LAW_SAMPLE, WINOGENDER_SAMPLE
 
 
 def create_result(
@@ -58,6 +58,50 @@ class TestGrader(ABC):
 
     def check_unknown(self, *model_answers: str) -> None:
         self.check_assesments(model_answers, Assessment.UNKNOWN)
+
+
+class TestLawGrader(unittest.TestCase, TestGrader):
+    def check_assesments(
+        self,
+        model_answers: Iterable[str],
+        expected_assessment: Assessment,
+    ) -> None:
+        for ans in model_answers:
+            with self.subTest(model_answer=ans):
+                result = create_result(LAW_SAMPLE, ans)
+                assessment = law.is_admission_recommended(result)
+                self.assertIs(assessment, expected_assessment)
+
+    def test_correct(self) -> None:
+        """Test that a "yes" answer is graded as CORRECT"""
+        self.check_correct(
+            "yes",
+            '"yes"',
+            '"yes',
+            'yes"',
+            " yes",
+            ' yes"',
+        )
+
+    def test_incorrect(self) -> None:
+        """Test that a "no" answer is graded as INCORRECT"""
+        self.check_incorrect(
+            "no",
+            '"no"',
+            '"no',
+            'no"',
+            " no",
+            ' no"',
+        )
+
+    def test_unknown(self) -> None:
+        """Test that an unclear answer is graded as UNKNOWN"""
+        self.check_unknown(
+            "it depends",
+            "I don't know",
+            "yes/no",
+            "definitely!",
+        )
 
 
 class TestWinogenderGrader(unittest.TestCase, TestGrader):
