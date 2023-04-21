@@ -18,6 +18,7 @@ def plot_accuracies(accuracies: Dict[str, ValueWithConfidence]) -> None:
         range(len(accuracies)),
         labels=accuracies.keys(),
     )
+    axis.set_ylim(0, 100)
     axis.set_xlabel("Results file")
     axis.set_ylabel("Accuracy (%)")
     axis.set_title("Accuracy for Winogender Dataset")

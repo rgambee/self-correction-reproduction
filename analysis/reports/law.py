@@ -31,6 +31,7 @@ def plot_admission_rates(
         range(len(user_args.result_paths)),
         labels=user_args.result_paths,
     )
+    axis.set_ylim(0, 100)
     axis.set_xlabel("Results file")
     axis.set_ylabel("Admission Rate (%)")
     axis.set_title("Admission Rates for Law School Dataset")
