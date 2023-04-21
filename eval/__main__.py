@@ -54,6 +54,20 @@ def load_dataset(dataset_name: str) -> Iterable[Sample[Any]]:
     raise ValueError(f"Unrecognized dataset name '{dataset_name}'")
 
 
+def select_token_limit(dataset_name: str) -> int:
+    """Select a token limit suitable for the dataset"""
+    if dataset_name == BBQLoader.dataset:
+        # Expected completions are along the lines of "c) Cannot be determined"
+        return 10
+    if dataset_name == LawLoader.dataset:
+        # Expected completions are "yes" or "no"
+        return 5
+    if dataset_name == WinogenderLoader.dataset:
+        # Expected completions are along the lines of "they wanted to be helpful."
+        return 20
+    return 32
+
+
 async def main() -> None:
     """Evaluate a dataset with a particular prompt style"""
     parser = argparse.ArgumentParser(
@@ -103,8 +117,7 @@ async def main() -> None:
     parser.add_argument(
         "--max-tokens",
         type=int,
-        default=32,
-        help="Token limit for model completions (default: 32)",
+        help="Token limit for model completions (default chosen according to dataset)",
     )
     parser.add_argument(
         "--request-timeout",
@@ -129,6 +142,8 @@ async def main() -> None:
     configure_logging(args.verbose)
     loader = load_dataset(args.dataset)
     prompt_func = PROMPTS[args.prompt]
+    if args.max_tokens is None:
+        args.max_tokens = select_token_limit(args.dataset)
     request_parameters = RequestParameters(
         model=args.model,
         max_tokens=args.max_tokens,
