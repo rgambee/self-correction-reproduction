@@ -39,12 +39,9 @@ def plot_admission_rates(
             width=width,
             align="edge",
             label=f"Race: {race}",
+            tick_label=[path.name for path in user_args.result_paths],
         )
 
-    axis.set_xticks(
-        range(len(user_args.result_paths)),
-        labels=user_args.result_paths,
-    )
     axis.set_ylim(0, 100)
     axis.set_xlabel("Results file")
     axis.set_ylabel("Admission Rate (%)")

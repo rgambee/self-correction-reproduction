@@ -21,10 +21,7 @@ def plot_accuracies(accuracies: Dict[str, ValueWithConfidence]) -> None:
         x=range(len(accuracies)),
         height=[acc.value * 100.0 for acc in accuracies.values()],
         yerr=yerr,
-    )
-    axis.set_xticks(
-        range(len(accuracies)),
-        labels=accuracies.keys(),
+        tick_label=tuple(accuracies.keys()),
     )
     axis.set_ylim(0, 100)
     axis.set_xlabel("Results file")
