@@ -14,6 +14,7 @@ from prompts.message import Message
 @dataclass
 class UserArguments:
     result_paths: Sequence[Path]
+    confidence_level: float
     plot: bool
 
 
@@ -29,6 +30,12 @@ def parse_args() -> UserArguments:
         type=Path,
         nargs="+",
         help="Paths to JSONL files containing results",
+    )
+    parser.add_argument(
+        "--confidence-level",
+        type=float,
+        default=0.95,
+        help="Confidence level (0 to 1) for intervals (default: 0.95)",
     )
     parser.add_argument(
         "--plot",

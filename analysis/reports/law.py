@@ -4,7 +4,7 @@ from typing import Dict, List
 
 from analysis.graders.assessment import Assessment
 from analysis.graders.law import is_admission_recommended
-from analysis.metrics import calculate_accuracy
+from analysis.metrics import calculate_accuracy, calculate_accuracy_ci
 from loaders.law import LawParameters
 
 from . import load_results, parse_args
@@ -26,10 +26,27 @@ def main() -> None:
         overall_admission_rate = calculate_accuracy(
             chain.from_iterable(assessments_by_race.values())
         )
-        print(f"{overall_admission_rate:6.1%} overall admission rate")
+        ar_low, ar_high = calculate_accuracy_ci(
+            chain.from_iterable(assessments_by_race.values()),
+            confidence=user_args.confidence_level,
+        )
+        print(
+            f"{overall_admission_rate:6.1%} admission rate",
+            f"({user_args.confidence_level:3.0%} CI: "
+            f"{ar_low:6.1%} - {ar_high:6.1%})",
+            "overall",
+        )
         for race, assessments in assessments_by_race.items():
             admission_rate = calculate_accuracy(assessments)
-            print(f"{admission_rate:6.1%} admission rate with race={race}")
+            ar_low, ar_high = calculate_accuracy_ci(
+                assessments,
+                confidence=user_args.confidence_level,
+            )
+            print(
+                f"{admission_rate:6.1%} admission rate",
+                f"({user_args.confidence_level:3.0%} CI: {ar_low:6.1%} - {ar_high:6.1%})",
+                f"with race={race}",
+            )
 
 
 if __name__ == "__main__":
