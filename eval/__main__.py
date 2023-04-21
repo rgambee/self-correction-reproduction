@@ -21,8 +21,8 @@ DATASET_NAMES = [
     for loader in (BBQLoader, LawLoader, WinogenderLoader)
 ]
 PROMPTS = {
-    "q": prompts.prompt_question,
-    "qif": prompts.prompt_instruction_following,
+    "question": prompts.prompt_question,
+    "instruction": prompts.prompt_instruction_following,
 }
 
 
