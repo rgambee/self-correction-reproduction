@@ -25,7 +25,21 @@ def plot_admission_rates(
         xoffset = i * width - len(admission_rates) * width / 2.0
         xcoords = [j + xoffset for j in range(len(user_args.result_paths))]
         rates = [rates_by_path[p.name].value * 100.0 for p in user_args.result_paths]
-        axis.bar(xcoords, rates, width=width, align="edge", label=f"Race: {race}")
+        yerr = [
+            [
+                abs(rates_by_path[p.name].relative_interval()[i] * 100.0)
+                for p in user_args.result_paths
+            ]
+            for i in range(2)
+        ]
+        axis.bar(
+            x=xcoords,
+            height=rates,
+            yerr=yerr,
+            width=width,
+            align="edge",
+            label=f"Race: {race}",
+        )
 
     axis.set_xticks(
         range(len(user_args.result_paths)),

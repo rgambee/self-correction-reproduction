@@ -13,7 +13,15 @@ from . import load_results, parse_args
 def plot_accuracies(accuracies: Dict[str, ValueWithConfidence]) -> None:
     """Plot the accuracy for each results file using a bar chart"""
     _, axis = plt.subplots()
-    axis.bar(range(len(accuracies)), [acc.value * 100.0 for acc in accuracies.values()])
+    yerr = [
+        [abs(acc.relative_interval()[i] * 100.0) for acc in accuracies.values()]
+        for i in range(2)
+    ]
+    axis.bar(
+        x=range(len(accuracies)),
+        height=[acc.value * 100.0 for acc in accuracies.values()],
+        yerr=yerr,
+    )
     axis.set_xticks(
         range(len(accuracies)),
         labels=accuracies.keys(),
