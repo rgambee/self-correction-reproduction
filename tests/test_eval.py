@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, Mapping, Optional, Union
 from unittest.mock import MagicMock, call, patch
 
-from eval import evaluate_dataset, find_most_recent_sample
+from eval import evaluate_dataset, get_saved_samples
 from eval.processing import process_samples
 from eval.request import Request, RequestParameters
 from loaders.law import LawLoader, LawParameters, LawSample
@@ -244,7 +244,7 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
         await asyncio.wait_for(task, long_timeout_s)
 
 
-class TestFindMostRecentSample(unittest.TestCase):
+class TestPreviouslySavedSamples(unittest.TestCase):
     @contextmanager
     def write_results_file(
         self,
@@ -263,27 +263,27 @@ class TestFindMostRecentSample(unittest.TestCase):
             yield temp_path
 
     def test_nonexistent_file(self) -> None:
-        """Test that a nonexistent file returns None"""
-        self.assertIsNone(find_most_recent_sample(Path("nonexistent.jsonl")))
+        """Test that a nonexistent file returns the empty set"""
+        self.assertEqual(get_saved_samples(Path("nonexistent.jsonl")), set())
 
     def test_empty_file(self) -> None:
-        """Test that an empty file returns None"""
+        """Test that an empty file returns the empty set"""
         with self.write_results_file([]) as temp_path:
-            self.assertIsNone(find_most_recent_sample(temp_path))
+            self.assertEqual(get_saved_samples(temp_path), set())
 
     def test_single_sample(self) -> None:
-        """Test that a file with one sample returns its id"""
+        """Test that a file with one sample returns a set with its id"""
         sample_id = 123
         with self.write_results_file([{"sample": {"id": sample_id}}]) as temp_path:
-            self.assertEqual(find_most_recent_sample(temp_path), sample_id)
+            self.assertEqual(get_saved_samples(temp_path), {sample_id})
 
     def test_multiple_samples(self) -> None:
-        """Test that the last id is returned, not the highest"""
+        """Test that multiple ids are returned as a set"""
         sample_ids = [3, 2, 1]
         with self.write_results_file(
             [{"sample": {"id": sample_id}} for sample_id in sample_ids]
         ) as temp_path:
-            self.assertEqual(find_most_recent_sample(temp_path), sample_ids[-1])
+            self.assertEqual(get_saved_samples(temp_path), set(sample_ids))
 
     def test_invalid_samples(self) -> None:
         """Test that invalid samples are ignored"""
@@ -299,7 +299,7 @@ class TestFindMostRecentSample(unittest.TestCase):
                 "}",
             ]
         ) as temp_path:
-            self.assertEqual(find_most_recent_sample(temp_path), sample_id)
+            self.assertEqual(get_saved_samples(temp_path), {sample_id})
 
 
 if __name__ == "__main__":

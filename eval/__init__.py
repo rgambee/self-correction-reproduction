@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, Callable, Iterable, List, Optional
+from typing import Any, Callable, Iterable, List, Optional, Set
 
 import jsonlines
 
@@ -33,9 +33,9 @@ async def evaluate_dataset(
 
     logger = logging.getLogger(__name__)
     # Check the results file to see if we've already evaluated some of the samples
-    last_sample_id = find_most_recent_sample(results_file)
-    if last_sample_id is not None:
-        logger.info("Resuming from sample %d", last_sample_id)
+    saved_samples = get_saved_samples(results_file)
+    if saved_samples:
+        logger.info("Skipping %d previously evaluated samples", len(saved_samples))
 
     requests_queue: asyncio.Queue[Request[P]] = asyncio.Queue(maxsize=num_workers)
     results_queue: asyncio.Queue[Result[P]] = asyncio.Queue(maxsize=num_workers)
@@ -48,7 +48,7 @@ async def evaluate_dataset(
             parameters=parameters,
             requests_queue=requests_queue,
             max_requests_per_min=max_requests_per_min,
-            last_sample_id=last_sample_id,
+            previously_saved_samples=saved_samples,
         ),
     )
     sample_task.set_name("process_samples")
@@ -82,26 +82,27 @@ async def evaluate_dataset(
     )
 
 
-def find_most_recent_sample(results_file: Path) -> Optional[int]:
-    """Check the results file to get the id of the sample that was last evaluated
+def get_saved_samples(results_file: Path) -> Set[int]:
+    """Check the results file to get the IDs of samples that have already been evaluated
 
     This is helpful for resuming a long evaluation after it's been interrupted.
 
-    If the results file doesn't exist or doesn't contain any valid results, return None.
-
-    This function assumes the results are sorted by sample id.
+    If the results file doesn't exist or doesn't contain any valid results, return the
+    empty set.
     """
+    ids: Set[int] = set()
     if not results_file.exists():
-        return None
-
-    last_id: Optional[int] = None
+        return ids
     with jsonlines.open(results_file) as reader:
         for line in reader.iter(type=dict, skip_invalid=True):
             try:
-                last_id = int(line.get("sample", {}).get("id", None))
+                sample_id = int(line.get("sample", {}).get("id", None))
             except (AttributeError, TypeError, ValueError):
                 pass
-    return last_id
+            else:
+                if sample_id is not None:
+                    ids.add(sample_id)
+    return ids
 
 
 # pylint: disable-next=too-many-arguments

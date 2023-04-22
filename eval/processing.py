@@ -8,7 +8,7 @@ from pathlib import Path
 
 # Import monotonic() on its own so that it can be mocked during testing
 from time import monotonic
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Container, Iterable
 
 import jsonlines
 import openai
@@ -26,7 +26,7 @@ async def process_samples(
     parameters: RequestParameters,
     requests_queue: asyncio.Queue[Request[P]],
     max_requests_per_min: float,
-    last_sample_id: Optional[int] = None,
+    previously_saved_samples: Container[int] = frozenset(),
 ) -> None:
     """Prepare samples for submission to the API
 
@@ -41,7 +41,7 @@ async def process_samples(
     last_check_time = monotonic()
     for sample in samples:
         # If we've already evaluated this sample, skip it
-        if last_sample_id is not None and sample.id <= last_sample_id:
+        if sample.id in previously_saved_samples:
             continue
 
         # Limit the rate at which requests are enqueued to avoid exceeding the API's
