@@ -4,22 +4,22 @@ from typing import Dict
 import matplotlib.pyplot as plt
 
 from analysis.graders.winogender import is_answer_correct
-from analysis.metrics import ValueWithConfidence, calculate_accuracy
+from analysis.metrics import BinomialDistribution, calculate_accuracy
 from loaders.winogender import WinogenderParameters
 
 from . import load_results, parse_args
 
 
-def plot_accuracies(accuracies: Dict[str, ValueWithConfidence]) -> None:
+def plot_accuracies(accuracies: Dict[str, BinomialDistribution]) -> None:
     """Plot the accuracy for each results file using a bar chart"""
     _, axis = plt.subplots()
     yerr = [
-        [abs(acc.relative_interval()[i] * 100.0) for acc in accuracies.values()]
-        for i in range(2)
+        [abs(acc.ci_low_rel * 100.0) for acc in accuracies.values()],
+        [abs(acc.ci_high_rel * 100.0) for acc in accuracies.values()],
     ]
     axis.bar(
         x=range(len(accuracies)),
-        height=[acc.value * 100.0 for acc in accuracies.values()],
+        height=[acc.proportion * 100.0 for acc in accuracies.values()],
         yerr=yerr,
         tick_label=tuple(accuracies.keys()),
     )
@@ -33,7 +33,7 @@ def plot_accuracies(accuracies: Dict[str, ValueWithConfidence]) -> None:
 def main() -> None:
     """Report metrics for results from the Winogender dataset"""
     user_args = parse_args()
-    accuracies: Dict[str, ValueWithConfidence] = {}
+    accuracies: Dict[str, BinomialDistribution] = {}
     for path in user_args.result_paths:
         assessments = tuple(
             is_answer_correct(result)

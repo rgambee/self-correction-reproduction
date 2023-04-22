@@ -7,14 +7,14 @@ from matplotlib import pyplot as plt
 
 from analysis.graders.assessment import Assessment
 from analysis.graders.law import is_admission_recommended
-from analysis.metrics import ValueWithConfidence, calculate_accuracy
+from analysis.metrics import BinomialDistribution, calculate_accuracy
 from loaders.law import LawParameters
 
 from . import UserArguments, load_results, parse_args
 
 
 def plot_admission_rates(
-    admission_rates: Dict[str, Dict[str, ValueWithConfidence]],
+    admission_rates: Dict[str, Dict[str, BinomialDistribution]],
     user_args: UserArguments,
 ) -> None:
     """Plot admission rates by results file and race using a bar chart"""
@@ -24,13 +24,18 @@ def plot_admission_rates(
     for i, (race, rates_by_path) in enumerate(admission_rates.items()):
         xoffset = i * width - len(admission_rates) * width / 2.0
         xcoords = [j + xoffset for j in range(len(user_args.result_paths))]
-        rates = [rates_by_path[p.name].value * 100.0 for p in user_args.result_paths]
+        rates = [
+            rates_by_path[p.name].proportion * 100.0 for p in user_args.result_paths
+        ]
         yerr = [
             [
-                abs(rates_by_path[p.name].relative_interval()[i] * 100.0)
+                abs(rates_by_path[p.name].ci_low_rel * 100.0)
                 for p in user_args.result_paths
-            ]
-            for i in range(2)
+            ],
+            [
+                abs(rates_by_path[p.name].ci_high_rel * 100.0)
+                for p in user_args.result_paths
+            ],
         ]
         axis.bar(
             x=xcoords,
@@ -53,7 +58,7 @@ def plot_admission_rates(
 def main() -> None:
     """Report metrics for results from the law school dataset"""
     user_args = parse_args()
-    admission_rates: Dict[str, Dict[str, ValueWithConfidence]] = {}
+    admission_rates: Dict[str, Dict[str, BinomialDistribution]] = {}
     for path in user_args.result_paths:
         assessments_by_race: Dict[str, List[Assessment]] = {}
         for result in load_results(path, LawParameters):
@@ -77,7 +82,9 @@ def main() -> None:
             print(f"{rate!r} admission rate with race={race}")
             if race not in admission_rates:
                 admission_rates[race] = defaultdict(
-                    lambda: ValueWithConfidence(0.0, 0.0, 0.0, 0.0)
+                    lambda: BinomialDistribution(
+                        successes=0, samples=1, confidence_level=1.0
+                    )
                 )
             admission_rates[race][path.name] = rate
 
