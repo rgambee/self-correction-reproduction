@@ -1,5 +1,6 @@
+import math
 from collections import Counter
-from typing import Iterable
+from typing import Iterable, Optional, Tuple
 
 from scipy import stats
 
@@ -20,13 +21,17 @@ class BinomialDistribution:
         successes: int,
         samples: int,
         confidence_level: float,
+        confidence_interval: Optional[Tuple[float, float]] = None,
     ) -> None:
         self.binom_test_result = stats.binomtest(successes, samples)
         self.confidence_level = confidence_level
-        self.confidence_interval = self.binom_test_result.proportion_ci(
-            confidence_level=self.confidence_level,
-            method="exact",
-        )
+        if confidence_interval is not None:
+            self.confidence_interval = confidence_interval
+        else:
+            self.confidence_interval = self.binom_test_result.proportion_ci(
+                confidence_level=self.confidence_level,
+                method="exact",
+            )
 
     @property
     def proportion(self) -> float:
@@ -34,11 +39,11 @@ class BinomialDistribution:
 
     @property
     def ci_low(self) -> float:
-        return float(self.confidence_interval.low)
+        return float(self.confidence_interval[0])
 
     @property
     def ci_high(self) -> float:
-        return float(self.confidence_interval.high)
+        return float(self.confidence_interval[1])
 
     @property
     def ci_low_rel(self) -> float:
@@ -77,4 +82,60 @@ def calculate_accuracy(
         successes=counts[Assessment.CORRECT],
         samples=counts[Assessment.CORRECT] + counts[Assessment.INCORRECT],
         confidence_level=confidence_level,
+    )
+
+
+def binomial_difference(
+    binom1: BinomialDistribution,
+    binom2: BinomialDistribution,
+) -> BinomialDistribution:
+    """Compute the difference in proportions of two binomial distributions
+
+    Warning: do not pass the result of this function back to it a second time. Doing so
+    will produce inaccurate values.
+
+    This uses Newcombe's interval discussed in Brown and Li:
+    http://stat.wharton.upenn.edu/~lbrown/Papers/2005c%20Confidence%20intervals%20for%20the%20two%20sample%20binomial%20distribution%20problem.pdf
+
+    The interval was originally published by Newcombe in:
+    https://www.researchgate.net/publication/13687790_Interval_estimation_for_the_difference_between_independent_proportions_Comparison_of_eleven_methods
+    """
+    if binom1.confidence_level != binom2.confidence_level:
+        raise ValueError("The confidence levels of the two distributions must be equal")
+    # Newcombe's interval relies on the Wilson intervals of the two inputs, which isn't
+    # what the BinomialDistribution uses by default. Here we compute them ourselves.
+    low1, high1 = binom1.binom_test_result.proportion_ci(
+        confidence_level=binom1.confidence_level,
+        method="wilson",
+    )
+    low2, high2 = binom2.binom_test_result.proportion_ci(
+        confidence_level=binom2.confidence_level,
+        method="wilson",
+    )
+
+    successes1 = binom1.binom_test_result.k
+    samples1 = binom1.binom_test_result.n
+    successes2 = binom2.binom_test_result.k
+    samples2 = binom2.binom_test_result.n
+
+    z_value = stats.norm.ppf(1 - (1 - binom1.confidence_level) / 2)
+    low_diff = z_value * math.sqrt(
+        low1 * (1 - low1) / samples1 + high2 * (1 - high2) / samples2
+    )
+    high_diff = z_value * math.sqrt(
+        high1 * (1 - high1) / samples1 + low2 * (1 - low2) / samples2
+    )
+
+    # The number of successes and samples don't have much meaning for the difference
+    # between two proportions. We take an approach that produces the correct proportion
+    # for the difference, but wouldn't be appropriate for feeding into this function
+    # again.
+    return BinomialDistribution(
+        successes=successes1 * samples2 - successes2 * samples1,
+        samples=samples1 * samples2,
+        confidence_level=binom1.confidence_level,
+        confidence_interval=(
+            max(min(binom1.proportion - binom2.proportion - low_diff, 1.0), 0.0),
+            max(min(binom1.proportion - binom2.proportion + high_diff, 1.0), 0.0),
+        ),
     )
