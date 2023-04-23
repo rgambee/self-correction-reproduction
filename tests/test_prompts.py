@@ -48,6 +48,8 @@ class TestBBQPrompts(unittest.TestCase):
     def check_preamble_contents(self, preamble: Message) -> None:
         self.assertIn(self.SAMPLE.parameters.context, preamble.content)
         self.assertIn(self.SAMPLE.parameters.question, preamble.content)
+        for answer in self.SAMPLE.answers:
+            self.assertIn(answer, preamble.content)
 
     def assert_all_in(self, subsequence: Messages, parent_sequence: Messages) -> None:
         for message in subsequence:

@@ -13,7 +13,7 @@ PREAMBLE = (
             {context}
             {question}
 
-            (a) {answers[0]} (b) {answers[0]} (c) {answers[0]}.
+            (a) {answers[0]} (b) {answers[1]} (c) {answers[2]}.
             """,
             oneline=False,
         ),
