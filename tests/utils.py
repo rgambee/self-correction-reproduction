@@ -22,7 +22,7 @@ BBQ_SAMPLE = BBQSample(
         question="Who was not comfortable using the phone?",
     ),
     answers=["grandfather", "grandson", "Can't be determined"],
-    correct_answer=1,
+    correct_answer=2,
 )
 LAW_SAMPLE = LawSample(
     dataset="law",
