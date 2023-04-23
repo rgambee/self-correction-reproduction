@@ -39,7 +39,9 @@ def configure_logging(verbose: bool) -> None:
 def load_dataset(dataset_name: str) -> Iterable[Sample[Any]]:
     """Load a dataset by name"""
     if dataset_name == BBQLoader.dataset:
-        return BBQLoader(datasets.find_bbq_dataset())
+        bbq_loader = BBQLoader(datasets.find_bbq_dataset())
+        bbq_loader.load_bias_targets(datasets.find_bbq_metadata())
+        return bbq_loader
     if dataset_name == LawLoader.dataset:
         paths = datasets.find_law_dataset()
         # For the law dataset, generate samples twice: once with race set to
@@ -49,9 +51,9 @@ def load_dataset(dataset_name: str) -> Iterable[Sample[Any]]:
             for race in ("Black", "White")
         )
     if dataset_name == WinogenderLoader.dataset:
-        loader = WinogenderLoader(datasets.find_winogender_dataset())
-        loader.load_bls_data(datasets.find_winogender_stats())
-        return loader
+        wg_loader = WinogenderLoader(datasets.find_winogender_dataset())
+        wg_loader.load_bls_data(datasets.find_winogender_stats())
+        return wg_loader
     raise ValueError(f"Unrecognized dataset name '{dataset_name}'")
 
 
