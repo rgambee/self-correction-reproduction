@@ -99,7 +99,10 @@ class WinogenderLoader(DatasetLoader[WinogenderParameters]):
         """Load BLS occupation data from a TSV file
 
         Column names are
-            occupation  bergsma_pct_female  bls_pct_female  bls_year
+            occupation
+            bergsma_pct_female
+            bls_pct_female
+            bls_year
 
         Only the occupation and bls_pct_female columns are used. The others are ignored.
         """
