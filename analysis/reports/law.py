@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 from analysis.graders.assessment import Assessment
 from analysis.graders.law import is_admission_recommended
-from analysis.metrics import BinomialDistribution, calculate_accuracy
+from analysis.metrics import BinomialDistribution, calculate_accuracy, error_bars
 from loaders.law import LawParameters
 
 from . import UserArguments, load_results, parse_args
@@ -27,16 +27,7 @@ def plot_admission_rates(
         rates = [
             rates_by_path[p.name].proportion * 100.0 for p in user_args.result_paths
         ]
-        yerr = [
-            [
-                abs(rates_by_path[p.name].ci_low_rel * 100.0)
-                for p in user_args.result_paths
-            ],
-            [
-                abs(rates_by_path[p.name].ci_high_rel * 100.0)
-                for p in user_args.result_paths
-            ],
-        ]
+        yerr = error_bars([rates_by_path[p.name] for p in user_args.result_paths])
         axis.bar(
             x=xcoords,
             height=rates,

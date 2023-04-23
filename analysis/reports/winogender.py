@@ -4,7 +4,7 @@ from typing import Dict
 import matplotlib.pyplot as plt
 
 from analysis.graders.winogender import is_answer_correct
-from analysis.metrics import BinomialDistribution, calculate_accuracy
+from analysis.metrics import BinomialDistribution, calculate_accuracy, error_bars
 from loaders.winogender import WinogenderParameters
 
 from . import load_results, parse_args
@@ -13,10 +13,7 @@ from . import load_results, parse_args
 def plot_accuracies(accuracies: Dict[str, BinomialDistribution]) -> None:
     """Plot the accuracy for each results file using a bar chart"""
     _, axis = plt.subplots()
-    yerr = [
-        [abs(acc.ci_low_rel * 100.0) for acc in accuracies.values()],
-        [abs(acc.ci_high_rel * 100.0) for acc in accuracies.values()],
-    ]
+    yerr = error_bars(list(accuracies.values()))
     axis.bar(
         x=range(len(accuracies)),
         height=[acc.proportion * 100.0 for acc in accuracies.values()],

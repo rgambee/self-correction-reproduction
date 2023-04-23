@@ -1,6 +1,6 @@
 import math
 from collections import Counter
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, List, Optional, Sequence, Tuple
 
 from scipy import stats
 
@@ -138,4 +138,21 @@ def binomial_difference(
             max(min(binom1.proportion - binom2.proportion - low_diff, 1.0), 0.0),
             max(min(binom1.proportion - binom2.proportion + high_diff, 1.0), 0.0),
         ),
+    )
+
+
+def error_bars(
+    binoms: Sequence[BinomialDistribution],
+    multiplier: float = 100.0,
+) -> Tuple[List[float], List[float]]:
+    """Return error bars compatible with Matplotlib
+
+    The error bars are multiplied by the given multiplier, which defaults to 100.0 to
+    convert proportions to percentages.
+    """
+    return (
+        # Matplotlib expects both sides of the error bar to be positive, which is why we
+        # take the absolute value of the relative confidence interval.
+        [abs(b.ci_low_rel * multiplier) for b in binoms],
+        [abs(b.ci_high_rel * multiplier) for b in binoms],
     )
