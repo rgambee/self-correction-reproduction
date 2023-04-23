@@ -23,6 +23,7 @@ DATASET_NAMES = [
 PROMPTS = {
     "question": prompts.prompt_question,
     "instruction": prompts.prompt_instruction_following,
+    "match-stats": prompts.prompt_match_stats,
 }
 
 
@@ -142,6 +143,13 @@ async def main() -> None:
     configure_logging(args.verbose)
     loader = load_dataset(args.dataset)
     prompt_func = PROMPTS[args.prompt]
+
+    if prompt_func is prompts.prompt_match_stats:
+        if not isinstance(loader, WinogenderLoader):
+            raise ValueError(
+                "match-stats prompt is only compatible with winogender dataset"
+            )
+
     if args.max_tokens is None:
         args.max_tokens = select_token_limit(args.dataset)
     request_parameters = RequestParameters(
