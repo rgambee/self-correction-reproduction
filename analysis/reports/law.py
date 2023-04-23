@@ -14,9 +14,8 @@ from analysis.metrics import (
     calculate_accuracy,
     error_bars,
 )
+from analysis.reports import UserArguments, load_results, parse_args
 from loaders.law import LawParameters
-
-from . import UserArguments, load_results, parse_args
 
 
 def plot_admission_rates(

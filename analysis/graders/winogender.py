@@ -1,11 +1,10 @@
 import logging
 import re
 
+from analysis.graders.assessment import Assessment
+from analysis.graders.parsing import result_to_answer
 from eval.result import Result
 from loaders.winogender import WinogenderParameters
-
-from .assessment import Assessment
-from .parsing import result_to_answer
 
 
 def is_answer_correct(result: Result[WinogenderParameters]) -> Assessment:

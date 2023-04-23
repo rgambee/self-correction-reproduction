@@ -3,11 +3,10 @@ import re
 import string
 from typing import List
 
+from analysis.graders.assessment import Assessment
+from analysis.graders.parsing import result_to_answer
 from eval.result import Result
 from loaders.bbq import BBQParameters
-
-from .assessment import Assessment
-from .parsing import result_to_answer
 
 
 def is_answer_correct(result: Result[BBQParameters]) -> Assessment:

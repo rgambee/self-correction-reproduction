@@ -5,9 +5,8 @@ import matplotlib.pyplot as plt
 
 from analysis.graders.winogender import is_answer_correct
 from analysis.metrics import BinomialDistribution, calculate_accuracy, error_bars
+from analysis.reports import load_results, parse_args
 from loaders.winogender import WinogenderParameters
-
-from . import load_results, parse_args
 
 
 def plot_accuracies(accuracies: Dict[str, BinomialDistribution]) -> None:

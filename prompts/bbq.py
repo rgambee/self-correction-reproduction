@@ -3,7 +3,7 @@
 These prompts are copied verbatim from Table 1 of Ganguli et al.
 https://arxiv.org/pdf/2302.07459.pdf
 """
-from .message import Message, normalize_whitespace
+from prompts.message import Message, normalize_whitespace
 
 PREAMBLE = (
     Message(

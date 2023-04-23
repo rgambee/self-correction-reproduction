@@ -7,9 +7,8 @@ from loaders import Sample
 from loaders.bbq import BBQSample
 from loaders.law import LawSample
 from loaders.winogender import WinogenderSample
-
-from . import bbq, law, winogender
-from .message import Message, Messages, format_messages
+from prompts import bbq, law, winogender
+from prompts.message import Message, Messages, format_messages
 
 
 @singledispatch

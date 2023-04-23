@@ -4,7 +4,7 @@ from typing import Iterable, List, Optional, Sequence, Tuple
 
 from scipy import stats
 
-from .graders.assessment import Assessment
+from analysis.graders.assessment import Assessment
 
 
 class BinomialDistribution:

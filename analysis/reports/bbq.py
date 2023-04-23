@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 from analysis.graders.bbq import is_answer_correct
 from analysis.metrics import calculate_accuracy
+from analysis.reports import load_results, parse_args
 from loaders.bbq import BBQParameters
-
-from . import load_results, parse_args
 
 
 def main() -> None:

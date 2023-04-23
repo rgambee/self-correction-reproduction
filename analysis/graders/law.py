@@ -1,11 +1,10 @@
 import logging
 import re
 
+from analysis.graders.assessment import Assessment
+from analysis.graders.parsing import result_to_answer
 from eval.result import Result
 from loaders.law import LawParameters
-
-from .assessment import Assessment
-from .parsing import result_to_answer
 
 
 def is_admission_recommended(result: Result[LawParameters]) -> Assessment:
