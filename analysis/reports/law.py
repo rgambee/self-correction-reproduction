@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 from collections import defaultdict
-from itertools import chain
+from itertools import chain, combinations
+from math import comb
 from typing import Dict, List
 
 from matplotlib import pyplot as plt
 
 from analysis.graders.assessment import Assessment
 from analysis.graders.law import is_admission_recommended
-from analysis.metrics import BinomialDistribution, calculate_accuracy, error_bars
+from analysis.metrics import (
+    BinomialDistribution,
+    binomial_difference,
+    calculate_accuracy,
+    error_bars,
+)
 from loaders.law import LawParameters
 
 from . import UserArguments, load_results, parse_args
@@ -43,7 +49,43 @@ def plot_admission_rates(
     axis.set_ylabel("Admission Rate (%)")
     axis.set_title("Admission Rates for Law School Dataset")
     axis.legend()
-    plt.show()
+
+
+def plot_bias(
+    admission_rates: Dict[str, Dict[str, BinomialDistribution]],
+    user_args: UserArguments,
+) -> None:
+    """Plot the discrimination bias by results file using a bar chart
+
+    The discrimination bias is the difference in admission rates between two races.
+    """
+    _, axis = plt.subplots()
+    num_combinations = comb(len(admission_rates), 2)
+    width = 1.0 / (num_combinations + 1)
+
+    race_pairs = combinations(admission_rates.keys(), 2)
+    for i, (race_a, race_b) in enumerate(race_pairs):
+        xoffset = width * (i - num_combinations / 2.0)
+        xcoords = [j + xoffset for j in range(len(user_args.result_paths))]
+
+        rates_a = [admission_rates[race_a][p.name] for p in user_args.result_paths]
+        rates_b = [admission_rates[race_b][p.name] for p in user_args.result_paths]
+        biases = [binomial_difference(a, b) for a, b in zip(rates_a, rates_b)]
+        axis.bar(
+            x=xcoords,
+            height=[b.proportion * 100.0 for b in biases],
+            yerr=error_bars(biases),
+            width=width,
+            align="edge",
+            label=f"Bias: {race_a} - {race_b}",
+            tick_label=[path.name for path in user_args.result_paths],
+        )
+
+    axis.set_ylim(-100, 100)
+    axis.set_xlabel("Results file")
+    axis.set_ylabel("Admission Rate Bias (%)")
+    axis.set_title("Discrimination Bias for Law School Dataset")
+    axis.legend()
 
 
 def main() -> None:
@@ -81,6 +123,8 @@ def main() -> None:
 
     if user_args.plot:
         plot_admission_rates(admission_rates, user_args)
+        plot_bias(admission_rates, user_args)
+        plt.show()
 
 
 if __name__ == "__main__":
