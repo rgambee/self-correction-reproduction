@@ -1,7 +1,8 @@
 import unittest
 
 from analysis.graders.assessment import Assessment
-from analysis.metrics import binomial_difference, calculate_accuracy
+from analysis.metrics.accuracy import calculate_accuracy
+from analysis.metrics.binomial import binomial_difference
 
 
 class TestAccuracy(unittest.TestCase):

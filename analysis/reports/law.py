@@ -9,10 +9,10 @@ from matplotlib.axes import Axes
 
 from analysis.graders.assessment import Assessment
 from analysis.graders.law import is_admission_recommended
-from analysis.metrics import (
+from analysis.metrics.accuracy import calculate_accuracy
+from analysis.metrics.binomial import (
     BinomialDistribution,
     binomial_difference,
-    calculate_accuracy,
     error_bars,
 )
 from analysis.reports import UserArguments, load_results, parse_args

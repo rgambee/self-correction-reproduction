@@ -4,7 +4,8 @@ from typing import Dict
 import matplotlib.pyplot as plt
 
 from analysis.graders.winogender import is_answer_correct
-from analysis.metrics import BinomialDistribution, calculate_accuracy, error_bars
+from analysis.metrics.accuracy import calculate_accuracy
+from analysis.metrics.binomial import BinomialDistribution, error_bars
 from analysis.reports import load_results, parse_args
 from loaders.winogender import WinogenderParameters
 
