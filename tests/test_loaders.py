@@ -65,7 +65,15 @@ class TestBBQLoader(TestLoader):
     def test_real_dataset(self) -> None:
         """Test that the real BBQ dataset can be loaded"""
         loader = BBQLoader(datasets.find_bbq_dataset())
-        self.assertEqual(count_iterable(loader), 58492)
+        loader.load_bias_targets(datasets.find_bbq_metadata())
+        sample_count = 0
+        bias_target_count = 0
+        for sample in loader:
+            sample_count += 1
+            if sample.parameters.bias_target_index is not None:
+                bias_target_count += 1
+        self.assertEqual(sample_count, 58492)
+        self.assertGreater(bias_target_count, sample_count / 2)
 
 
 class TestLawLoader(TestLoader):
