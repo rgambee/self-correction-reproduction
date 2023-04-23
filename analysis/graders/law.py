@@ -21,6 +21,10 @@ def is_admission_recommended(result: Result[LawParameters]) -> Assessment:
     if model_answer is None:
         return Assessment.UNKNOWN
 
+    # We only expect a single, short word. If the model gave a longer reply, truncate it
+    # to reduce the chances of undesired matches.
+    model_answer = model_answer[:10]
+
     yes_match = re.search(r"\byes\b", model_answer)
     no_match = re.search(r"\bno\b", model_answer)
     if yes_match and not no_match:

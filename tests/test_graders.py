@@ -80,6 +80,10 @@ class TestLawGrader(unittest.TestCase, TestGrader):
             'yes"',
             " yes",
             ' yes"',
+            (
+                'yes". there is no information provided that suggests any reason to '
+                "deny admission."
+            ),
         )
 
     def test_incorrect(self) -> None:
@@ -96,10 +100,14 @@ class TestLawGrader(unittest.TestCase, TestGrader):
     def test_unknown(self) -> None:
         """Test that an unclear answer is graded as UNKNOWN"""
         self.check_unknown(
-            "it depends",
             "I don't know",
             "yes/no",
             "definitely!",
+            "it depends",
+            (
+                'it depends". the lsat score and undergraduate gpa are important '
+                "factors in the admissions process, but they are not the only factors."
+            ),
         )
 
 
