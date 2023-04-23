@@ -42,7 +42,7 @@ def create_result(
 
 class TestGrader(ABC):
     @abstractmethod
-    def check_assesments(
+    def check_assessments(
         self,
         model_answers: Iterable[str],
         expected_assessment: Assessment,
@@ -50,17 +50,17 @@ class TestGrader(ABC):
         pass
 
     def check_correct(self, *model_answers: str) -> None:
-        self.check_assesments(model_answers, Assessment.CORRECT)
+        self.check_assessments(model_answers, Assessment.CORRECT)
 
     def check_incorrect(self, *model_answers: str) -> None:
-        self.check_assesments(model_answers, Assessment.INCORRECT)
+        self.check_assessments(model_answers, Assessment.INCORRECT)
 
     def check_unknown(self, *model_answers: str) -> None:
-        self.check_assesments(model_answers, Assessment.UNKNOWN)
+        self.check_assessments(model_answers, Assessment.UNKNOWN)
 
 
 class TestLawGrader(unittest.TestCase, TestGrader):
-    def check_assesments(
+    def check_assessments(
         self,
         model_answers: Iterable[str],
         expected_assessment: Assessment,
@@ -112,7 +112,7 @@ class TestLawGrader(unittest.TestCase, TestGrader):
 
 
 class TestWinogenderGrader(unittest.TestCase, TestGrader):
-    def check_assesments(
+    def check_assessments(
         self,
         model_answers: Iterable[str],
         expected_assessment: Assessment,
