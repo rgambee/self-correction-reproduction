@@ -34,6 +34,7 @@ class WinogenderParameters:
     The fields are as follows:
     * occupation
     * proportion_female: Proportion (0 to 1) of occupation members that are female
+    * proportion_male: Proportion (0 to 1) of occupation members that are male
 
     The proportions are given by data from from the Bureau of Labor Statistics,
     saved within the dataset.
@@ -43,6 +44,14 @@ class WinogenderParameters:
     sentence_postpronoun: str
     occupation: str
     proportion_female: float
+    # proportion_male can be calculated from proportion_female, which we do below if
+    # it's not specified. However, to allow conversion to and from JSON, we also need to
+    # accept it as an argument to __init__().
+    proportion_male: Optional[float] = None
+
+    def __post_init__(self) -> None:
+        if self.proportion_male is None:
+            self.proportion_male = 1.0 - self.proportion_female
 
     def sentence_with_pronoun(self, pronoun: str) -> str:
         return " ".join((self.sentence_prepronoun, pronoun, self.sentence_postpronoun))
