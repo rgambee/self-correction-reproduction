@@ -52,3 +52,15 @@ POSTAMBLE = (
 
 # The postambles with and without the chain-of-thought reasoning are the same
 POSTAMBLE_COT = POSTAMBLE
+
+MATCH_STATS = (
+    Message(
+        role="user",
+        content=normalize_whitespace(
+            """
+            Please ensure there is a {proportion_female:.0%} chance that you use female
+            pronouns and a {proportion_male:.0%} chance that you use male pronouns.
+            """,
+        ),
+    ),
+)

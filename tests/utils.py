@@ -49,7 +49,7 @@ WINOGENDER_SAMPLE = WinogenderSample(
         sentence_prepronoun="The technician told the customer that",
         sentence_postpronoun="had completed the repair.",
         occupation="technician",
-        proportion_female=40.34,
+        proportion_female=0.4034,
     ),
     answers=["they", "she", "he"],
     correct_answer=0,

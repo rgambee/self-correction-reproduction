@@ -152,3 +152,20 @@ def _prompt_chain_of_thought_b(
         ),
         sample=sample,
     )
+
+
+@singledispatch
+def prompt_match_stats(sample: Sample) -> Messages:
+    """Generate a prompt that asks the model to match BLS occupation statistics
+
+    This prompt only supports samples from the Winogender dataset.
+    """
+    raise TypeError(f"Unsupported sample type: {type(sample)}")
+
+
+@prompt_match_stats.register
+def _prompt_match_stats_winogender(sample: WinogenderSample) -> Messages:
+    return format_messages(
+        messages=winogender.PREAMBLE + winogender.MATCH_STATS + winogender.POSTAMBLE,
+        sample=sample,
+    )
