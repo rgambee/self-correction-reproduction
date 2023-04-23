@@ -8,8 +8,7 @@ from analysis.graders.assessment import Assessment
 from eval.result import Completion, Reply, Result
 from loaders import P, Sample
 from prompts.message import Message
-
-from .utils import LAW_SAMPLE, WINOGENDER_SAMPLE
+from tests.utils import LAW_SAMPLE, WINOGENDER_SAMPLE
 
 
 def create_result(
