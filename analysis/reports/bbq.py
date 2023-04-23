@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from analysis.graders.bbq import is_answer_correct
 from analysis.metrics import calculate_accuracy
 from loaders.bbq import BBQParameters
