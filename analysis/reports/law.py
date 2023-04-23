@@ -2,9 +2,10 @@
 from collections import defaultdict
 from itertools import chain, combinations
 from math import comb
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 
 from analysis.graders.assessment import Assessment
 from analysis.graders.law import is_admission_recommended
@@ -21,9 +22,11 @@ from loaders.law import LawParameters
 def plot_admission_rates(
     admission_rates: Dict[str, Dict[str, BinomialDistribution]],
     user_args: UserArguments,
-) -> None:
+    axes: Optional[Axes] = None,
+) -> Axes:
     """Plot admission rates by results file and race using a bar chart"""
-    _, axis = plt.subplots()
+    if axes is None:
+        _, axes = plt.subplots()
     width = 1.0 / (len(admission_rates) + 1)
 
     for i, (race, rates_by_path) in enumerate(admission_rates.items()):
@@ -33,7 +36,7 @@ def plot_admission_rates(
             rates_by_path[p.name].proportion * 100.0 for p in user_args.result_paths
         ]
         yerr = error_bars([rates_by_path[p.name] for p in user_args.result_paths])
-        axis.bar(
+        axes.bar(
             x=xcoords,
             height=rates,
             yerr=yerr,
@@ -42,26 +45,29 @@ def plot_admission_rates(
             label=f"Race: {race}",
         )
 
-    axis.set_xticks(
+    axes.set_xticks(
         range(len(user_args.result_paths)),
         labels=user_args.result_paths,
     )
-    axis.set_ylim(0, 100)
-    axis.set_xlabel("Results file")
-    axis.set_ylabel("Admission Rate (%)")
-    axis.set_title("Admission Rates for Law School Dataset")
-    axis.legend()
+    axes.set_ylim(0, 100)
+    axes.set_xlabel("Results file")
+    axes.set_ylabel("Admission Rate (%)")
+    axes.set_title("Admission Rates for Law School Dataset")
+    axes.legend()
+    return axes
 
 
 def plot_bias(
     admission_rates: Dict[str, Dict[str, BinomialDistribution]],
     user_args: UserArguments,
-) -> None:
+    axes: Optional[Axes] = None,
+) -> Axes:
     """Plot the discrimination bias by results file using a bar chart
 
     The discrimination bias is the difference in admission rates between two races.
     """
-    _, axis = plt.subplots()
+    if axes is None:
+        _, axes = plt.subplots()
     num_combinations = comb(len(admission_rates), 2)
     width = 1.0 / (num_combinations + 1)
 
@@ -73,7 +79,7 @@ def plot_bias(
         rates_a = [admission_rates[race_a][p.name] for p in user_args.result_paths]
         rates_b = [admission_rates[race_b][p.name] for p in user_args.result_paths]
         biases = [binomial_difference(a, b) for a, b in zip(rates_a, rates_b)]
-        axis.bar(
+        axes.bar(
             x=xcoords,
             height=[b.proportion * 100.0 for b in biases],
             yerr=error_bars(biases),
@@ -82,15 +88,16 @@ def plot_bias(
             label=f"Bias: {race_a} - {race_b}",
         )
 
-    axis.set_xticks(
+    axes.set_xticks(
         range(len(user_args.result_paths)),
         labels=user_args.result_paths,
     )
-    axis.set_ylim(-100, 100)
-    axis.set_xlabel("Results file")
-    axis.set_ylabel("Admission Rate Bias (%)")
-    axis.set_title("Discrimination Bias for Law School Dataset")
-    axis.legend()
+    axes.set_ylim(-100, 100)
+    axes.set_xlabel("Results file")
+    axes.set_ylabel("Admission Rate Bias (%)")
+    axes.set_title("Discrimination Bias for Law School Dataset")
+    axes.legend()
+    return axes
 
 
 def main() -> None:
@@ -127,8 +134,9 @@ def main() -> None:
             admission_rates[race][path.name] = rate
 
     if user_args.plot:
-        plot_admission_rates(admission_rates, user_args)
-        plot_bias(admission_rates, user_args)
+        _, subplot_axes = plt.subplots(nrows=2, ncols=1, sharex=True)
+        plot_admission_rates(admission_rates, user_args, axes=subplot_axes[0])
+        plot_bias(admission_rates, user_args, axes=subplot_axes[1])
         plt.show()
 
 
