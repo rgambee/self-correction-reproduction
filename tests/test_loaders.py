@@ -1,4 +1,5 @@
 import json
+import math
 import unittest
 from dataclasses import replace
 from typing import Sequence, Type
@@ -135,7 +136,18 @@ class TestWinogenderLoader(TestLoader):
         """Test that the real winogender dataset can be loaded"""
         loader = self.LOADER_CLASS(datasets.find_winogender_dataset())
         loader.load_bls_data(datasets.find_winogender_stats())
-        self.assertEqual(count_iterable(loader), 60)
+        sample_count = 0
+        for sample in loader:
+            sample_count += 1
+            self.assertFalse(math.isnan(sample.parameters.proportion_female))
+            self.assertIsNotNone(sample.parameters.proportion_male)
+            # Duplicate assert to make mypy happy
+            assert sample.parameters.proportion_male is not None
+            self.assertAlmostEqual(
+                sample.parameters.proportion_female + sample.parameters.proportion_male,
+                1.0,
+            )
+        self.assertEqual(sample_count, 60)
 
     def test_sentence_with_pronoun(self) -> None:
         """Test that the sentence can be populated with a desired pronoun"""
