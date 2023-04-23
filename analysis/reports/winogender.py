@@ -18,7 +18,10 @@ def plot_accuracies(accuracies: Dict[str, BinomialDistribution]) -> None:
         x=range(len(accuracies)),
         height=[acc.proportion * 100.0 for acc in accuracies.values()],
         yerr=yerr,
-        tick_label=tuple(accuracies.keys()),
+    )
+    axis.set_xticks(
+        range(len(accuracies)),
+        labels=accuracies.keys(),
     )
     axis.set_ylim(0, 100)
     axis.set_xlabel("Results file")
