@@ -10,7 +10,7 @@ from loaders import DatasetLoader, Sample
 
 # Sample IDs are not unique across the dataset. Questions are uniquely identified by the
 # combination of category, question_index and example_id.
-QuestionKey = Tuple[str, int, int]
+QuestionKey = Tuple[str, int]
 
 
 @unique
@@ -95,11 +95,7 @@ class BBQLoader(DatasetLoader[BBQParameters]):
                     # Skip header row
                     continue
 
-                key = (
-                    entry["category"],
-                    int(entry["question_index"]),
-                    int(entry["example_id"]),
-                )
+                key = (entry["category"].lower(), int(entry["example_id"]))
 
                 try:
                     target_index = int(entry["target_loc"])
@@ -125,11 +121,7 @@ class BBQLoader(DatasetLoader[BBQParameters]):
             polarity=entry["question_polarity"],
             question=entry["question"],
             bias_target_index=self._bias_targets.get(
-                (
-                    entry["category"],
-                    int(entry["question_index"]),
-                    int(entry["example_id"]),
-                )
+                (entry["category"].lower(), int(entry["example_id"]))
             ),
         )
         return BBQSample(
