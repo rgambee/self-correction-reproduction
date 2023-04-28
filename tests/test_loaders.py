@@ -74,7 +74,7 @@ class TestBBQLoader(TestLoader):
             if sample.parameters.bias_target_index is not None:
                 bias_target_count += 1
         self.assertEqual(sample_count, 58492)
-        self.assertGreater(bias_target_count, sample_count / 2)
+        self.assertEqual(bias_target_count, 58476)
 
 
 class TestLawLoader(TestLoader):
