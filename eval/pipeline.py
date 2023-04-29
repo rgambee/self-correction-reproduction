@@ -19,7 +19,7 @@ T = TypeVar("T")
 
 @dataclass
 class Stage(Generic[T]):
-    """One step of an evaluation pipline
+    """One step of an evaluation pipeline
 
     * tasks: the concurrent workers within this stage
     * output_queue: the shared queue where all tasks in this stage put their results
