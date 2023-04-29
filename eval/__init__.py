@@ -128,16 +128,16 @@ async def wait_for_tasks_to_complete(
                 pending_tasks, return_when=asyncio.FIRST_COMPLETED
             )
             for task in done_tasks:
-                logging.debug("Task %s is done", task.get_name())
+                logger.debug("Task %s is done", task.get_name())
                 err = task.exception()
                 if err is not None:
                     raise err
                 if task is sample_task:
                     # No more samples. Break out of while loop to shut down other tasks.
-                    logging.info("No more samples, shutting down...")
+                    logger.info("No more samples, shutting down...")
                     finished = True
     except Exception:
-        logging.exception("Encountered error, shutting down...")
+        logger.exception("Encountered error, shutting down...")
         raise
     finally:
         # Shut things down from upstream to downstream to avoid information being lost

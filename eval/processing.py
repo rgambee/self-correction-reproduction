@@ -87,15 +87,15 @@ async def process_requests(
         try:
             reply = await request.submit()
         except openai.error.RateLimitError:
-            logging.warning("Rate limit exceeded, sleeping before retrying...")
+            logger.warning("Rate limit exceeded, sleeping before retrying...")
             await requests_queue.put(request)
             await asyncio.sleep(rate_limit_sleep)
             continue
         except openai.error.APIError as err:
             if 500 <= err.http_status < 600:
-                logging.debug("Encountered server error:")
-                logging.debug("    %s", err.http_body)
-                logging.debug("Retrying...")
+                logger.debug("Encountered server error:")
+                logger.debug("    %s", err.http_body)
+                logger.debug("Retrying...")
                 await requests_queue.put(request)
                 continue
             raise
