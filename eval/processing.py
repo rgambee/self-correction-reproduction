@@ -82,11 +82,7 @@ async def process_requests(
     """
     logger = logging.getLogger(__name__)
     while True:
-        try:
-            request = requests_queue.get_nowait()
-        except asyncio.QueueEmpty:
-            await asyncio.sleep(0.1)
-            continue
+        request = await requests_queue.get()
         logger.debug("Submitting request for sample %d", request.sample.id)
         try:
             reply = await request.submit()
@@ -133,11 +129,7 @@ async def process_results(
         dumps=partial(json.dumps, default=to_json_serializable_type),
     ) as output:
         while True:
-            try:
-                result = results_queue.get_nowait()
-            except asyncio.QueueEmpty:
-                await asyncio.sleep(0.1)
-                continue
+            result = await results_queue.get()
             output.write(result)
             results_queue.task_done()
             logger.debug("Saved result for sample %d", result.sample.id)
