@@ -43,7 +43,8 @@ def main() -> None:
             assessments,
             confidence_level=user_args.confidence_level,
         )
-        print(f"{accuracy!r} accuracy for results {path.name}")
+        print("Results for file", path.name)
+        print(f"{accuracy!r} overall accuracy")
         accuracies[path.name] = accuracy
 
     if user_args.plot:
