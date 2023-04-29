@@ -1,8 +1,14 @@
 import logging
+import re
 import string
 from typing import Any, Optional
 
 from eval.result import Result
+
+# Examples:
+#   "yes. "
+#   "(a) correct answer. "
+SENTENCE_REGEX = re.compile(r"(?P<sentence>.*\w.*)\.\s")
 
 
 def result_to_answer(
@@ -21,6 +27,11 @@ def result_to_answer(
     except IndexError as err:
         logger.debug("Could not find answer in result due to %r", err)
         return None
+
+    # If the model replied with multiple sentences, only return the first
+    sentence_match = SENTENCE_REGEX.search(answer)
+    if sentence_match:
+        answer = sentence_match["sentence"]
 
     chars_to_strip = string.whitespace
     if strip_punctuation:
