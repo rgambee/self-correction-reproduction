@@ -110,6 +110,23 @@ async def process_requests(
             )
 
 
+async def process_results_cot(
+    intermediate_results_queue: asyncio.Queue[Result[P]],
+    requests_queue: asyncio.Queue[Request[P]],
+    prompt_func: Callable[[Sample[P], str], Messages],
+    parameters: RequestParameters,
+) -> None:
+    """Turn results back into requests for further evaluation"""
+    while True:
+        result = await intermediate_results_queue.get()
+        sample = result.sample
+        model_reasoning = result.reply.choices[0].message.content
+        messages = prompt_func(sample, model_reasoning)
+        request = Request(parameters=parameters, messages=messages, sample=sample)
+        await requests_queue.put(request)
+        intermediate_results_queue.task_done()
+
+
 async def process_results(
     results_queue: asyncio.Queue[Result[P]],
     results_file: Path,
