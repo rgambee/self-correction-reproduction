@@ -1,6 +1,7 @@
 # mypy: disable-error-code="type-arg"
 """Prompt functions suitable for OpenAI's /chat/completions endpoint"""
 from functools import singledispatch
+from itertools import chain
 from types import ModuleType
 
 from loaders import Sample
@@ -142,14 +143,16 @@ def _prompt_chain_of_thought_b(
     model_reasoning: str,
     module: ModuleType,
 ) -> Messages:
-    return format_messages(
-        messages=(
-            module.PREAMBLE
-            + module.CHAIN_OF_THOUGHT
-            + (Message(role="assistant", content=model_reasoning),)
-            + module.POSTAMBLE_COT
-        ),
-        sample=sample,
+    return tuple(
+        chain(
+            format_messages(
+                messages=module.PREAMBLE + module.CHAIN_OF_THOUGHT, sample=sample
+            ),
+            # Don't pass model_reasoning to format_messages() since it contains
+            # arbitrary, unsanitized text
+            (Message(role="assistant", content=model_reasoning),),
+            format_messages(messages=module.POSTAMBLE_COT, sample=sample),
+        )
     )
 
 

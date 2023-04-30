@@ -154,6 +154,22 @@ class TestWinogenderPrompts(TestBBQPrompts):
             )
         )
 
+    def test_unsanitized_model_reasoning(self) -> None:
+        """Test that the chain-of-thought prompt is robust to unsanitized text"""
+        for model_reasoning in (
+            "{category}",
+            "{0}",
+            "{",
+            "f'{5}'",
+            "%s",
+            "%(category)s",
+        ):
+            with self.subTest(model_reasoning=model_reasoning):
+                messages = prompts.prompt_chain_of_thought_b(
+                    self.SAMPLE, model_reasoning
+                )
+                self.assertTrue(any(model_reasoning in msg.content for msg in messages))
+
 
 class TestWhitespaceNormalization(unittest.TestCase):
     def test_strip(self) -> None:
