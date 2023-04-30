@@ -8,7 +8,7 @@ from typing import Any, Iterable
 
 import datasets
 import prompts
-from eval import evaluate_dataset
+from eval import Cycle, evaluate_dataset
 from eval.request import RequestParameters
 from loaders import Sample
 from loaders.bbq import BBQLoader
@@ -162,11 +162,13 @@ async def main() -> None:
     )
     args.output_file.parent.mkdir(parents=True, exist_ok=True)
 
+    cycles = [
+        Cycle(prompt_func=prompt_func, parameters=request_parameters),
+    ]
     await evaluate_dataset(
         samples=loader,
-        prompt_func=prompt_func,
+        cycles=cycles,
         results_file=args.output_file,
-        parameters=request_parameters,
         max_requests_per_min=args.request_rate_limit,
         num_workers=args.workers,
     )

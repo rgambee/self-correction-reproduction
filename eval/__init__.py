@@ -1,24 +1,40 @@
 import asyncio
 import logging
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable, Set
+from typing import Callable, Iterable, Sequence, Set
 
 import jsonlines
 
 from eval.pipeline import Pipeline, Stage
-from eval.processing import process_requests, process_results, process_samples
+from eval.processing import (
+    process_intermediate_results,
+    process_requests,
+    process_samples,
+    save_results_to_file,
+)
 from eval.request import Request, RequestParameters
 from eval.result import Result
 from loaders import P, Sample
 from prompts.message import Messages
 
 
-# pylint: disable-next=too-many-arguments
+@dataclass
+class Cycle:
+    """A function to generate prompts plus parameters for submission to the API
+
+    When evaluating a sample, multiple cycles allow for multiple model inferences, i.e.
+    feeding the model's output back as another prompt.
+    """
+
+    prompt_func: Callable[..., Messages]
+    parameters: RequestParameters
+
+
 async def evaluate_dataset(
     samples: Iterable[Sample[P]],
-    prompt_func: Callable[[Sample[P]], Messages],
+    cycles: Sequence[Cycle],
     results_file: Path,
-    parameters: RequestParameters,
     max_requests_per_min: float,
     num_workers: int = 16,
 ) -> None:
@@ -31,6 +47,8 @@ async def evaluate_dataset(
     """
     if num_workers < 1:
         raise ValueError("num_workers must be at least 1")
+    if len(cycles) < 1:
+        raise ValueError("Must provide at least 1 cycle")
 
     logger = logging.getLogger(__name__)
     # Check the results file to see if we've already evaluated some of the samples
@@ -38,19 +56,24 @@ async def evaluate_dataset(
     if saved_samples:
         logger.info("Skipping %d previously evaluated samples", len(saved_samples))
 
-    pipeline = Pipeline()
-    requests_queue: asyncio.Queue[Request[P]] = asyncio.Queue(maxsize=num_workers)
-    results_queue: asyncio.Queue[Result[P]] = asyncio.Queue(maxsize=num_workers)
+    # Normalize both the number of workers and the request rate limit by the number of
+    # cycles. These parameters are interpreted as global limits, so each cycle may only
+    # use a fraction of the total.
+    workers_per_stage = max(num_workers // len(cycles), 1)
+    max_requests_per_min = max(max_requests_per_min / len(cycles), 1)
 
-    # Create a pipeline to hold all the tasks
+    pipeline = Pipeline()
+    requests_queue: asyncio.Queue[Request[P]] = asyncio.Queue(maxsize=workers_per_stage)
+    results_queue: asyncio.Queue[Result[P]]
+
     # Stage 0: turn Samples into Requests using prompt_func()
     pipeline.append_stage(
         Stage.from_coro(
             coro_func=process_samples,
             kwargs={
                 "samples": samples,
-                "prompt_func": prompt_func,
-                "parameters": parameters,
+                "prompt_func": cycles[0].prompt_func,
+                "parameters": cycles[0].parameters,
                 "requests_queue": requests_queue,
                 "max_requests_per_min": max_requests_per_min,
                 "previously_saved_samples": saved_samples,
@@ -58,22 +81,44 @@ async def evaluate_dataset(
             output_queue=requests_queue,
         )
     )
-    # Stage 1: turn Requests into Results by submitting them to the API
-    pipeline.append_stage(
-        Stage.from_coro(
-            coro_func=process_requests,
-            kwargs={
-                "requests_queue": requests_queue,
-                "results_queue": results_queue,
-            },
-            output_queue=results_queue,
-            num_tasks=num_workers,
+
+    for i in range(len(cycles)):
+        # Stage 1: turn Requests into Results by submitting them to the API
+        results_queue = asyncio.Queue(maxsize=workers_per_stage)
+        pipeline.append_stage(
+            Stage.from_coro(
+                coro_func=process_requests,
+                kwargs={
+                    "requests_queue": requests_queue,
+                    "results_queue": results_queue,
+                },
+                output_queue=results_queue,
+                num_tasks=workers_per_stage,
+            )
         )
-    )
-    # Stage 2: save Results to file
+
+        if i < len(cycles) - 1:
+            # Stage 2: if necessary, transform intermediate Results into a another
+            # round of Requests
+            requests_queue = asyncio.Queue(maxsize=workers_per_stage)
+            pipeline.append_stage(
+                Stage.from_coro(
+                    coro_func=process_intermediate_results,
+                    kwargs={
+                        "intermediate_results_queue": results_queue,
+                        "requests_queue": requests_queue,
+                        "prompt_func": cycles[i + 1].prompt_func,
+                        "parameters": cycles[i + 1].parameters,
+                    },
+                    output_queue=requests_queue,
+                    num_tasks=workers_per_stage,
+                )
+            )
+
+    # Stage 3: save final Results to file
     pipeline.append_stage(
         Stage.from_coro(
-            coro_func=process_results,
+            coro_func=save_results_to_file,
             kwargs={
                 "results_queue": results_queue,
                 "results_file": results_file,
@@ -81,7 +126,7 @@ async def evaluate_dataset(
             output_queue=None,
         )
     )
-    await pipeline.wait(timeout=parameters.timeout)
+    await pipeline.wait(timeout=cycles[0].parameters.timeout)
 
 
 def get_saved_samples(results_file: Path) -> Set[int]:

@@ -110,7 +110,7 @@ async def process_requests(
             )
 
 
-async def process_results_cot(
+async def process_intermediate_results(
     intermediate_results_queue: asyncio.Queue[Result[P]],
     requests_queue: asyncio.Queue[Request[P]],
     prompt_func: Callable[[Sample[P], str], Messages],
@@ -127,7 +127,7 @@ async def process_results_cot(
         intermediate_results_queue.task_done()
 
 
-async def process_results(
+async def save_results_to_file(
     results_queue: asyncio.Queue[Result[P]],
     results_file: Path,
 ) -> None:

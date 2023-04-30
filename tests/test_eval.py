@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, Mapping, Optional, Union
 from unittest.mock import MagicMock, call, patch
 
-from eval import evaluate_dataset, get_saved_samples
+from eval import Cycle, evaluate_dataset, get_saved_samples
 from eval.processing import process_samples
 from eval.request import Request, RequestParameters
 from loaders.law import LawLoader, LawParameters, LawSample
@@ -81,9 +81,8 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
         with make_temp_file() as temp_output:
             await evaluate_dataset(
                 samples=[mock_sample],
-                prompt_func=lambda s: self.DUMMY_PROMPT_MESSAGES,
+                cycles=[Cycle(lambda s: self.DUMMY_PROMPT_MESSAGES, mock_params)],
                 results_file=temp_output,
-                parameters=mock_params,
                 max_requests_per_min=100.0,
                 num_workers=1,
             )
@@ -103,13 +102,14 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
     async def test_response_error(self, mock_api: MagicMock) -> None:
         """Test that API errors propagated to caller"""
         mock_api.return_value = {"message": "Invalid reply"}
+        mock_params = create_mock_params(timeout=0.25)
+        cycles = [Cycle(prompt_question, mock_params)]
         with self.assertLogs(level=logging.ERROR):
             with self.assertRaises(TypeError):
                 await evaluate_dataset(
                     samples=[LAW_SAMPLE],
-                    prompt_func=prompt_question,
+                    cycles=cycles,
                     results_file=Path(os.devnull),
-                    parameters=create_mock_params(timeout=0.25),
                     max_requests_per_min=100.0,
                     num_workers=1,
                 )
@@ -119,9 +119,8 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(RuntimeError):
                 await evaluate_dataset(
                     samples=[LAW_SAMPLE],
-                    prompt_func=prompt_question,
+                    cycles=cycles,
                     results_file=Path(os.devnull),
-                    parameters=create_mock_params(timeout=0.25),
                     max_requests_per_min=100.0,
                     num_workers=1,
                 )
@@ -137,9 +136,8 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
             with make_temp_file() as temp_output:
                 await evaluate_dataset(
                     samples=samples,
-                    prompt_func=mock_prompt,
+                    cycles=[Cycle(mock_prompt, mock_params)],
                     results_file=temp_output,
-                    parameters=mock_params,
                     max_requests_per_min=100.0,
                     num_workers=len(samples),
                 )
@@ -190,9 +188,8 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                     file.write("\n")
                 await evaluate_dataset(
                     samples=samples,
-                    prompt_func=lambda s: self.DUMMY_PROMPT_MESSAGES,
+                    cycles=[Cycle(lambda s: self.DUMMY_PROMPT_MESSAGES, mock_params)],
                     results_file=temp_output,
-                    parameters=mock_params,
                     max_requests_per_min=100.0,
                     num_workers=1,
                 )
