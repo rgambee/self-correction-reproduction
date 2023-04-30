@@ -174,8 +174,8 @@ async def main() -> None:
         params = request_parameters
         if prompt_func is prompts.prompt_chain_of_thought_a:
             # For the model reasoning step of the chain-of-thought prompt style, use a
-            # token limit of 256 instead of the shorter limit for the answer itself.
-            params = replace(params, max_tokens=256)
+            # higher token limit and temperature.
+            params = replace(params, max_tokens=256, temperature=1.0)
         cycles.append(Cycle(prompt_func=prompt_func, parameters=params))
 
     await evaluate_dataset(
