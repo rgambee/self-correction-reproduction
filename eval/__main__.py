@@ -2,9 +2,10 @@
 import argparse
 import asyncio
 import logging
+from dataclasses import replace
 from itertools import chain
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, List
 
 import datasets
 import prompts
@@ -21,9 +22,15 @@ DATASET_NAMES = [
     for loader in (BBQLoader, LawLoader, WinogenderLoader)
 ]
 PROMPTS = {
-    "question": prompts.prompt_question,
-    "instruction": prompts.prompt_instruction_following,
-    "match-stats": prompts.prompt_match_stats,
+    "question": [prompts.prompt_question],
+    "instruction": [prompts.prompt_instruction_following],
+    "match-stats": [prompts.prompt_match_stats],
+    # The chain-of-thought prompt style consists of two functions: one to direct the
+    # model to think through the question and another to direct it to give an answer.
+    "chain-of-thought": [
+        prompts.prompt_chain_of_thought_a,
+        prompts.prompt_chain_of_thought_b,
+    ],
 }
 
 
@@ -144,9 +151,9 @@ async def main() -> None:
 
     configure_logging(args.verbose)
     loader = load_dataset(args.dataset)
-    prompt_func = PROMPTS[args.prompt]
+    prompt_funcs = PROMPTS[args.prompt]
 
-    if prompt_func is prompts.prompt_match_stats:
+    if prompts.prompt_match_stats in prompt_funcs:
         if not isinstance(loader, WinogenderLoader):
             raise ValueError(
                 "match-stats prompt is only compatible with winogender dataset"
@@ -162,9 +169,15 @@ async def main() -> None:
     )
     args.output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    cycles = [
-        Cycle(prompt_func=prompt_func, parameters=request_parameters),
-    ]
+    cycles: List[Cycle] = []
+    for prompt_func in prompt_funcs:
+        params = request_parameters
+        if prompt_func is prompts.prompt_chain_of_thought_a:
+            # For the model reasoning step of the chain-of-thought prompt style, use a
+            # token limit of 256 instead of the shorter limit for the answer itself.
+            params = replace(params, max_tokens=256)
+        cycles.append(Cycle(prompt_func=prompt_func, parameters=params))
+
     await evaluate_dataset(
         samples=loader,
         cycles=cycles,
