@@ -13,7 +13,11 @@ from eval import Cycle, evaluate_dataset, get_saved_samples
 from eval.processing import process_samples
 from eval.request import Request, RequestParameters
 from loaders.law import LawLoader, LawParameters, LawSample
-from prompts import prompt_question
+from prompts import (
+    prompt_chain_of_thought_a,
+    prompt_chain_of_thought_b,
+    prompt_question,
+)
 from prompts.message import Message
 from tests.test_loaders import TestLawLoader
 from tests.utils import LAW_SAMPLE, make_temp_file, write_dummy_dataset
@@ -125,8 +129,8 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                     num_workers=1,
                 )
 
-    async def test_end_to_end(self, mock_api: MagicMock) -> None:
-        """Test that samples are loaded, requests are sent and replies saved"""
+    async def test_end_to_end_single_cycle(self, mock_api: MagicMock) -> None:
+        """Test that samples evaluated and saved for a single-cycle pipeline"""
         mock_params = create_mock_params()
         mock_prompt = MagicMock(side_effect=prompt_question)
         # Use dummy law school dataset since that contains multiple samples
@@ -169,6 +173,89 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(
                             result["prompt_messages"],
                             [asdict(msg) for msg in prompt_question(loaded_sample)],
+                        )
+                        self.assertIn("reply", result)
+                        self.assertEqual(result["reply"], mock_api.return_value)
+                        result_index += 1
+        self.assertEqual(result_index, len(samples))
+
+    # pylint: disable-next=too-many-locals
+    async def test_end_to_end_multi_cycle(self, mock_api: MagicMock) -> None:
+        """Test that samples evaluated and saved for a multi-cycle pipeline"""
+        mock_params0 = create_mock_params(temperature=0.0)
+        mock_params1 = create_mock_params(temperature=1.0)
+        # For concision below
+        prompt_cot_a = prompt_chain_of_thought_a
+        prompt_cot_b = prompt_chain_of_thought_b
+        mock_prompt0 = MagicMock(side_effect=prompt_cot_a)
+        mock_prompt1 = MagicMock(side_effect=prompt_cot_b)
+        cycles = [
+            Cycle(mock_prompt0, mock_params0),
+            Cycle(mock_prompt1, mock_params1),
+        ]
+        mock_reasoning = mock_api.return_value["choices"][0]["message"]["content"]
+        # Use dummy law school dataset since that contains multiple samples
+        with write_dummy_dataset(TestLawLoader.DUMMY_DATA) as temp_input:
+            loader = LawLoader(temp_input)
+            samples = list(loader)
+            with make_temp_file() as temp_output:
+                await evaluate_dataset(
+                    samples=samples,
+                    cycles=cycles,
+                    results_file=temp_output,
+                    max_requests_per_min=100.0,
+                    num_workers=len(samples),
+                )
+                self.assertEqual(
+                    mock_prompt0.mock_calls,
+                    [call(samp) for samp in samples],
+                )
+                self.assertEqual(
+                    mock_prompt1.mock_calls,
+                    [call(samp, mock_reasoning) for samp in samples],
+                )
+
+                mock_api.assert_has_calls(
+                    [
+                        call(
+                            messages=[asdict(msg) for msg in prompt_cot_a(samp)],
+                            **asdict(mock_params0),
+                        )
+                        for samp in samples
+                    ],
+                    any_order=True,
+                )
+                mock_api.assert_has_calls(
+                    [
+                        call(
+                            messages=[
+                                asdict(msg)
+                                for msg in prompt_cot_b(samp, mock_reasoning)
+                            ],
+                            **asdict(mock_params1),
+                        )
+                        for samp in samples
+                    ],
+                    any_order=True,
+                )
+
+                result_index = 0
+                with open(temp_output, encoding="utf-8") as file:
+                    for line in file:
+                        result = json.loads(line)
+                        self.assertIn("sample", result)
+                        result["sample"]["parameters"] = LawParameters(
+                            **result["sample"]["parameters"]
+                        )
+                        loaded_sample = LawSample(**result["sample"])
+                        self.assertEqual(loaded_sample, samples[result_index])
+                        self.assertIn("prompt_messages", result)
+                        self.assertEqual(
+                            result["prompt_messages"],
+                            [
+                                asdict(msg)
+                                for msg in prompt_cot_b(loaded_sample, mock_reasoning)
+                            ],
                         )
                         self.assertIn("reply", result)
                         self.assertEqual(result["reply"], mock_api.return_value)
