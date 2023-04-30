@@ -100,7 +100,6 @@ async def process_requests(
                 continue
             raise
         else:
-            requests_queue.task_done()
             await results_queue.put(
                 Result(
                     sample=request.sample,
@@ -108,6 +107,7 @@ async def process_requests(
                     reply=reply,
                 )
             )
+            requests_queue.task_done()
 
 
 async def process_intermediate_results(
@@ -148,8 +148,8 @@ async def save_results_to_file(
         while True:
             result = await results_queue.get()
             output.write(result)
-            results_queue.task_done()
             logger.debug("Saved result for sample %d", result.sample.id)
+            results_queue.task_done()
 
 
 def to_json_serializable_type(value: Any) -> Any:
