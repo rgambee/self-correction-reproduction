@@ -56,14 +56,12 @@ async def evaluate_dataset(
     if saved_samples:
         logger.info("Skipping %d previously evaluated samples", len(saved_samples))
 
-    # Normalize both the number of workers and the request rate limit by the number of
-    # cycles. These parameters are interpreted as global limits, so each cycle may only
-    # use a fraction of the total.
-    workers_per_stage = max(num_workers // len(cycles), 1)
+    # Normalize the request rate limit by the number of cycles, since each cycle creates
+    # one request per sample.
     max_requests_per_min = max(max_requests_per_min / len(cycles), 1)
 
     pipeline = Pipeline()
-    requests_queue: asyncio.Queue[Request[P]] = asyncio.Queue(maxsize=workers_per_stage)
+    requests_queue: asyncio.Queue[Request[P]] = asyncio.Queue(maxsize=num_workers)
     results_queue: asyncio.Queue[Result[P]]
 
     # Stage 0: turn Samples into Requests using prompt_func()
@@ -84,7 +82,7 @@ async def evaluate_dataset(
 
     for i in range(len(cycles)):
         # Stage 1: turn Requests into Results by submitting them to the API
-        results_queue = asyncio.Queue(maxsize=workers_per_stage)
+        results_queue = asyncio.Queue(maxsize=num_workers)
         pipeline.append_stage(
             Stage.from_coro(
                 coro_func=process_requests,
@@ -93,14 +91,14 @@ async def evaluate_dataset(
                     "results_queue": results_queue,
                 },
                 output_queue=results_queue,
-                num_tasks=workers_per_stage,
+                num_tasks=num_workers,
             )
         )
 
         if i < len(cycles) - 1:
             # Stage 2: if necessary, transform intermediate Results into a another
             # round of Requests
-            requests_queue = asyncio.Queue(maxsize=workers_per_stage)
+            requests_queue = asyncio.Queue(maxsize=num_workers)
             pipeline.append_stage(
                 Stage.from_coro(
                     coro_func=process_intermediate_results,
@@ -111,7 +109,7 @@ async def evaluate_dataset(
                         "parameters": cycles[i + 1].parameters,
                     },
                     output_queue=requests_queue,
-                    num_tasks=workers_per_stage,
+                    num_tasks=num_workers,
                 )
             )
 
