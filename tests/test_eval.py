@@ -2,12 +2,13 @@ import asyncio
 import json
 import logging
 import os
+import time
 import unittest
 from contextlib import contextmanager
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, Mapping, Optional, Union
-from unittest.mock import MagicMock, call, patch
+from typing import Any, Dict, Iterable, Iterator, List, Mapping, Optional, Union
+from unittest.mock import MagicMock, call, create_autospec, patch
 
 from eval import Cycle, evaluate_dataset, get_saved_samples
 from eval.processing import process_samples
@@ -292,8 +293,10 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
     # Mock eval's handle of time.monotonic(), not the original. Otherwise, we'd
     # interfere with asyncio's sleeping and timeout functionality.
     @patch("eval.processing.monotonic", return_value=123456.0)
-    async def test_rate_limit(self, mock_time: MagicMock, _: MagicMock) -> None:
-        """Test that the request rate limit is enforced"""
+    async def test_rate_limit_individual(
+        self, mock_time: MagicMock, _: MagicMock
+    ) -> None:
+        """Test that individual requests are delayed according to the rate limit"""
         mock_params = create_mock_params()
         max_requests_per_min = 1.0
         request_interval_s = 1.0 / (max_requests_per_min / 60.0)
@@ -326,6 +329,41 @@ class TestDatasetEvaluation(unittest.IsolatedAsyncioTestCase):
         await asyncio.wait_for(second_request, long_timeout_s)
         # Wait for task to finish
         await asyncio.wait_for(task, long_timeout_s)
+
+    async def test_rate_limit_many(self, _: MagicMock) -> None:
+        """Test that many requests are enqueued slower than the rate limit"""
+        mock_requests_queue = create_autospec(asyncio.Queue, spec_set=True)
+        enqueue_times_s: List[float] = []
+        # Record the time when each request is enqueued
+        mock_requests_queue.put.side_effect = lambda _: enqueue_times_s.append(
+            time.monotonic()
+        )
+
+        max_requests_per_min = 600.0
+        num_samples = 620
+        # The first `max_requests_per_min` samples will be enqueued at once. Calculate
+        # how long the remaining ones should take to be enqueued.
+        num_delayed_samples = round(num_samples - max_requests_per_min)
+        expected_duration_s = num_delayed_samples / max_requests_per_min * 60.0
+        expected_gap_s = expected_duration_s / num_delayed_samples
+        start_time_s = time.monotonic()
+        await asyncio.wait_for(
+            process_samples(
+                samples=(LAW_SAMPLE for _ in range(num_samples)),
+                prompt_func=lambda _: self.DUMMY_PROMPT_MESSAGES,
+                parameters=create_mock_params(),
+                requests_queue=mock_requests_queue,
+                max_requests_per_min=max_requests_per_min,
+            ),
+            timeout=1.5 * expected_duration_s,
+        )
+        end_time_s = time.monotonic()
+
+        # Check that the requests weren't enqueued too quickly
+        self.assertGreater(end_time_s - start_time_s, expected_duration_s)
+        enqueue_times_s = enqueue_times_s[-num_delayed_samples:]
+        for prev_time_s, next_time_s in zip(enqueue_times_s[:-1], enqueue_times_s[1:]):
+            self.assertGreater(next_time_s - prev_time_s, expected_gap_s)
 
 
 class TestPreviouslySavedSamples(unittest.TestCase):
