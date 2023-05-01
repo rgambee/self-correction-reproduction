@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-from typing import Dict
+from typing import Dict, Optional
 
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 
 from analysis.graders.winogender import is_answer_correct
 from analysis.metrics.accuracy import calculate_accuracy
@@ -10,24 +11,28 @@ from analysis.reports import load_results, parse_args
 from loaders.winogender import WinogenderParameters
 
 
-def plot_accuracies(accuracies: Dict[str, BinomialDistribution]) -> None:
+def plot_accuracies(
+    accuracies: Dict[str, BinomialDistribution],
+    axes: Optional[Axes] = None,
+) -> Axes:
     """Plot the accuracy for each results file using a bar chart"""
-    _, axis = plt.subplots()
+    if axes is None:
+        _, axes = plt.subplots()
     yerr = error_bars(list(accuracies.values()))
-    axis.bar(
+    axes.bar(
         x=range(len(accuracies)),
         height=[acc.proportion * 100.0 for acc in accuracies.values()],
         yerr=yerr,
     )
-    axis.set_xticks(
+    axes.set_xticks(
         range(len(accuracies)),
         labels=accuracies.keys(),
     )
-    axis.set_ylim(0, 100)
-    axis.set_xlabel("Results file")
-    axis.set_ylabel("Accuracy (%)")
-    axis.set_title("Accuracy for Winogender Dataset")
-    plt.show()
+    axes.set_ylim(0, 100)
+    axes.set_xlabel("Results file")
+    axes.set_ylabel("Accuracy (%)")
+    axes.set_title("Accuracy for Winogender Dataset")
+    return axes
 
 
 def main() -> None:
@@ -49,6 +54,7 @@ def main() -> None:
 
     if user_args.plot:
         plot_accuracies(accuracies)
+        plt.show()
 
 
 if __name__ == "__main__":
