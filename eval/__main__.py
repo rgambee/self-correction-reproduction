@@ -54,8 +54,10 @@ def load_dataset(dataset_name: str) -> Iterable[Sample[Any]]:
         # For the law dataset, generate samples twice: once with race set to
         # "Black" and again with race set to "White".
         return chain.from_iterable(
-            LawLoader(paths, parameter_overrides={"race": race})
-            for race in ("Black", "White")
+            zip(
+                LawLoader(paths, parameter_overrides={"race": "Black"}),
+                LawLoader(paths, parameter_overrides={"race": "White"}),
+            )
         )
     if dataset_name == WinogenderLoader.dataset:
         wg_loader = WinogenderLoader(datasets.find_winogender_dataset())
