@@ -13,6 +13,20 @@ by Ganguli et al.
 
 ## Repository Organization
 
+*   [`datasets/`](datasets/) contains the three datasets used by this study.
+*   [`loaders/`](loaders/) contains code for loading the datasets into
+    individual samples.
+*   [`prompts/`](prompts/) contains functions to format each sample as a prompt
+    to send to the model.
+*   [`eval/`](eval/) contains code for evaluating samples, i.e. submitting them
+    to the model via an API, and saving the replies.
+*   [`analysis/`](analysis/) contains code to parse model responses, calculate
+    metrics and present results.
+*   [`results/`](results/) contains plots illustrating the model's performance
+    according to various metrics. The full set of results is omitted but can
+    be made available upon request.
+*   [`tests/`](tests/) contains automated tests for the rest of the code.
+
 ## Methodology
 
 ### Model
