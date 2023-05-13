@@ -99,6 +99,11 @@ def _prompt_chain_of_thought_a(
     sample: Sample,
     module: ModuleType,
 ) -> Messages:
+    # To better match the chain-of-thought prompt format used by Ganguli et al., this
+    # should also include the debias instructions from the instruction following prompt.
+    # This omission was noticed after most of the samples had been evaluated. Rather
+    # than restart the evaluation from the beginning, this prompt is being left as-is
+    # for the time being.
     return format_messages(
         messages=module.PREAMBLE + module.CHAIN_OF_THOUGHT,
         sample=sample,
@@ -143,6 +148,11 @@ def _prompt_chain_of_thought_b(
     model_reasoning: str,
     module: ModuleType,
 ) -> Messages:
+    # To better match the chain-of-thought prompt format used by Ganguli et al., this
+    # should also include the debias instructions from the instruction following prompt.
+    # This omission was noticed after most of the samples had been evaluated. Rather
+    # than restart the evaluation from the beginning, this prompt is being left as-is
+    # for the time being.
     return tuple(
         chain(
             format_messages(
