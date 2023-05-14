@@ -34,13 +34,13 @@ by Ganguli et al.
 The original paper used a suite of language models, with sizes ranging from 810
 million to 175 billion parameters. The models were fine tuned "to function as
 helpful dialogue models" with various amounts of reinforcement learning from
-human feedback (RLHF) [1].
+human feedback (RLHF) [[1]](#references).
 
 This study used GPT-3.5 (specifically `gpt-3.5-turbo`) since it was the nearest
 accessible match to the largest model from the original study. GPT-3.5 also
-contains 175 billion parameters [X] and has been fined tuned via RLHF for
-dialog [X], though the specifics of this fine tuning are doubtlessly different
-from the original study.
+contains 175 billion parameters [[2]](#references) and has been fined tuned via
+RLHF for dialog [[3]](#references), though the specifics of this fine tuning
+are doubtlessly different from the original study.
 
 Unlike the original, this study does not explore the effects of model size and
 RLHF training. Therefore, when the results of original study are shown below
@@ -49,18 +49,18 @@ training.
 
 ### Datasets
 
-This study used the same three datasets as the original.
+This study used the same three datasets as the original [[1]](#references).
 
 #### Bias Benchmark for QA 
 
-The Bias Benchmark for QA (BBQ) dataset [X] consists of over 58,000 multiple
-choice questions to probe many different social biases. Some questions are
-ambiguous, without enough context to identify which of the two people the
-question refers to. For these questions, the correct answer is always some
-variation of "unknown," though a model may give a different answer if it relies
-on stereotypes. Other questions have sufficient context to identify the correct
-person, though a model may still answer incorrectly if the question opposes its
-biases.
+The Bias Benchmark for QA (BBQ) dataset [[4]](#references) consists of over
+58,000 multiple choice questions to probe many different social biases. Some
+questions are ambiguous, without enough context to identify which of the two
+people the question refers to. For these questions, the correct answer is
+always some variation of "unknown," though a model may give a different answer
+if it relies on stereotypes. Other questions have sufficient context to
+identify the correct person, though a model may still answer incorrectly if the
+question opposes its biases.
 
 Here's an example question with ambiguous context from this dataset:
 
@@ -81,10 +81,10 @@ And here's an example question with disambiguated context:
 
 #### Winogender Schemas
 
-The Winogender Schemas dataset consists of a series of sentences covering 60
-different occupations. For this and the original study, the sentences were
-turned into fill-in-the-blank questions which asked the model to provide a
-pronoun for the person with the given occupation.
+The Winogender Schemas dataset [[5]](#references) consists of a series of
+sentences covering 60 different occupations. For this and the original study,
+the sentences were turned into fill-in-the-blank questions which asked the
+model to provide a pronoun for the person with the given occupation.
 
 Here's an example question from this dataset:
 
@@ -95,12 +95,12 @@ Here's an example question from this dataset:
 #### Law Student Course Admission
 
 This dataset derives from a survey done by the Law School Admission Council in
-the 1990s [X]. It contains demographic data, namely sex and race, along with
-scholastic metrics like GPA and LSAT score. Each entry in the dataset was used
-to populate a question asking the model whether the student should be admitted
-to a law school course with limited seats. Each question was posed twice, once
-with the student's race set to "Black" and once with "White", to determine
-whether race influences the model's decisions.
+the 1990s [[6][7]](#references). It contains demographic data, namely sex and
+race, along with scholastic metrics like GPA and LSAT score. Each entry in the
+dataset was used to populate a question asking the model whether the student
+should be admitted to a law school course with limited seats. Each question was
+posed twice, once with the student's race set to "Black" and once with "White",
+to determine whether race influences the model's decisions.
 
 Here's an example question from this dataset:
 
@@ -117,12 +117,12 @@ Here's an example question from this dataset:
 <summary>Note on capitalization</summary>
 
 In the original paper, Ganguli et al. capitalize the races as "Black" and
-"white," which is presumably also how they were presented to the model. In this
-study, both races were capitalized in an effort to remove capitalization as a
-confounding variable. This is not intended as linguistic prescription regarding
-how these words should be written in prose. A further experiment would be to
-examine how the model's answers depend on whether the student's race is
-capitalized.
+"white" [[1]](#references), which is presumably also how they were presented to
+the model. In this study, both races were capitalized in an effort to remove
+capitalization as a confounding variable. This is not intended as linguistic
+prescription regarding how these words should be written in prose. A further
+experiment would be to examine how the model's answers depend on whether the
+student's race is capitalized.
 
 </details>
 
@@ -132,8 +132,8 @@ capitalized.
     This section avoids indentation to prevent Markdown from interpreting the
     content as code blocks.
 -->
-This study used the same three prompt styles as the original paper [X]. Refer
-to it for more detail.
+This study used the same three prompt styles as the original paper
+[[1]](#references). Refer to it for more detail.
 
 <dl>
 <dt>Question</dt>
@@ -190,26 +190,26 @@ skipped.
 ### Metrics
 
 For the BBQ dataset, a bias score was calculated as defined by Parrish et al.
-[X]. The score ranges from -1 to +1, with positive values indicating a tendency
-to reinforce common stereotypes and negative values indicating a tendency to
-invert then. A value near zero indicates a tendency to avoid stereotypes
-altogether.
+[[4]](#references). The score ranges from -1 to +1, with positive values
+indicating a tendency to reinforce common stereotypes and negative values
+indicating a tendency to invert then. A value near zero indicates a tendency to
+avoid stereotypes altogether.
 
 For the Winogender dataset, the Pearson correlation coefficient was calculated
 between the probability that the model answered with a female pronoun and the
 fraction of professionals with that occupation who are female, according to
-data from the Bureau of Labor Statistics from 2015 and 2016 [X]. The
-coefficient ranges from -1 to +1, with positive values indicating a tendency
-to mimic real world trends and negative values indicating a tendency to invert
-them. A value near zero indicates little correlation between the model's
-answers and occupation statistics.
+data from the Bureau of Labor Statistics from 2015 and 2016 [[5]](#references).
+The coefficient ranges from -1 to +1, with positive values indicating a
+tendency to mimic real world trends and negative values indicating a tendency
+to invert them. A value near zero indicates little correlation between the
+model's answers and occupation statistics.
 
 Finally, for the law school dataset, the difference in admission rates for
-Black and white students was calculated [X]. The admission rate was simply
-taken to be the fraction of students for whom the model answered "yes." Again,
-this metric ranges from -1 to +1, with positive values indicating a preference
-for Black students and negative values indicating a preference for white
-students, all else being equal. A value near zero indicates that race has
+Black and white students was calculated [[1]](#references). The admission rate
+was simply taken to be the fraction of students for whom the model answered
+"yes." Again, this metric ranges from -1 to +1, with positive values indicating
+a preference for Black students and negative values indicating a preference for
+white students, all else being equal. A value near zero indicates that race has
 little effect on the model's answers.
 
 ## Results
@@ -237,7 +237,7 @@ In the original study, Ganguli et al. found that adding debiasing instructions
 and chain of thought reasoning to the prompt progressively decreased the bias
 score for the BBQ dataset and the correlation coefficient for the Windogender
 dataset. The same prompt modifications also increased preference for Black
-students in the law school admission dataset.
+students in the law school admission dataset [[1]](#references).
 
 In contrast, this study found that the prompt style had relatively little
 impact according to these metrics. The larger difference was between the
@@ -250,11 +250,11 @@ this? The nature of the RHLF fine tuning stands out as a likely culprit: the
 models used in the original study likely received different RLHF training of a
 different nature and degree compared to GPT-3.5. And Ganguli et al. found that
 the number of RLHF steps had a noticeable effect on the BBQ bias score and law
-school discrimination metrics [X]. Thus it stands to reason that fine tuning on
-a different RLHF dataset, potentially for more steps, could explain the gap
-between the original models and GPT-3.5. If this hypothesis is true, it
-indicates that RLHF fine tuning is a more important factor than prompt style,
-at least within the context of these datasets and metrics.
+school discrimination metrics [[1]](#references). Thus it stands to reason that
+fine tuning on a different RLHF dataset, potentially for more steps, could
+explain the gap between the original models and GPT-3.5. If this hypothesis is
+true, it indicates that RLHF fine tuning is a more important factor than prompt
+style, at least within the context of these datasets and metrics.
 
 ## Future Work
 
@@ -284,10 +284,47 @@ undertaken if time permits.
 1.  Experiment with other prompt styles. Prompt engineering is a active
     sub-field which is frequently uncovering new and often surprising
     discoveries about how prompts affect models' outputs. Ganguli et al. admit
-    that they did not systematically explore this area in their study [X].
-    There may be further insights to be gained by tweaking the prompt styles
-    above or investigating alternative ones.
+    that they did not systematically explore this area in their study
+    [[1]](#references). There may be further insights to be gained by tweaking
+    the prompt styles above or investigating alternative ones.
 
 ## References
+
+[1] Ganguli, D., Askell, A., Schiefer, N., Liao, T. I., Lukošiūtė, K., Chen,
+A., Goldie, A., Mirhoseini, A., Olsson, C., Hernandez, D., Drain, D., Li, D.,
+Tran-Johnson, E., Perez, E., Kernion, J., Kerr, J., Mueller, J., Landau, J.,
+Ndousse, K., … Kaplan, J. (2023). The Capacity for Moral Self-Correction in
+Large Language Models. _ArXiv [Cs.CL]_.
+https://doi.org/10.48550/arXiv.2302.07459
+
+[2] Brown, T. B., Mann, B., Ryder, N., Subbiah, M., Kaplan, J., Dhariwal, P.,
+Neelakantan, A., Shyam, P., Sastry, G., Askell, A., Agarwal, S., Herbert-Voss,
+A., Krueger, G., Henighan, T., Child, R., Ramesh, A., Ziegler, D. M., Wu, J.,
+Winter, C., … Amodei, D. (2020). Language Models are Few-Shot Learners. _ArXiv
+[Cs.CL]_. https://doi.org/10.48550/arXiv.2005.14165
+
+[3] OpenAI. (2022, November 30). _Introducing ChatGPT_.
+https://openai.com/blog/chatgpt
+
+[4] Parrish, A., Chen, A., Nangia, N., Padmakumar, V., Phang, J., Thompson, J.,
+Htut, P. M., & Bowman, S. (2022). BBQ: A hand-built bias benchmark for question
+answering. _Findings of the Association for Computational Linguistics: ACL
+2022_, 2086–2105. https://doi.org/10.18653/v1/2022.findings-acl.165
+
+[5] Rudinger, R., Naradowsky, J., Leonard, B., & Van Durme, B. (2018). Gender
+Bias in Coreference Resolution. _Proceedings of the 2018 Conference of the North
+American Chapter of the Association for Computational Linguistics: Human
+Language Technologies, Volume 2 (Short Papers)_, 8–14.
+https://doi.org/10.18653/v1/N18-2002
+
+[6] Wightman, L. F. (1998). LSAC National Longitudinal Bar Passage Study. _LSAC
+Research Report Series_.
+
+[7] Kusner, M., Loftus, J., Russell, C., & Silva, R. (2017). Counterfactual
+Fairness. _Proceedings of the 31st International Conference on Neural
+Information Processing Systems_, 4069–4079.
+https://doi.org/10.48550/arXiv.1703.06856
+
+---
 
 Copyright &copy; 2023 Robert Gambee
