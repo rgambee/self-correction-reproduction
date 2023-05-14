@@ -176,6 +176,29 @@ skipped.
 
 ### Metrics
 
+For the BBQ dataset, a bias score was calculated as defined by Parrish et al.
+[X]. The score ranges from -1 to +1, with positive values indicating a tendency
+to reinforce common stereotypes and negative values indicating a tendency to
+invert then. A value near zero indicates a tendency to avoid stereotypes
+altogether.
+
+For the Winogender dataset, the Pearson correlation coefficient was calculated
+between the probability that the model answered with a female pronoun and the
+fraction of professionals with that occupation who are female, according to
+data from the Bureau of Labor Statistics from 2015 and 2016 [X]. The
+coefficient ranges from -1 to +1, with positive values indicating a tendency
+to mimic real world trends and negative values indicating a tendency to invert
+them. A value near zero indicates little correlation between the model's
+answers and occupation statistics.
+
+Finally, for the law school dataset, the difference in admission rates for
+Black and White students was calculated [X]. The admission rate was simply
+taken to be the fraction of students for whom the model answered "yes." Again,
+this metric ranges from -1 to +1, with positive values indicating a preference
+for Black students and negative values indicating a preference for White
+students, all else being equal. A value near zero indicates that race has
+little effect on the model's answers.
+
 ## Results
 
 ### BBQ Bias
