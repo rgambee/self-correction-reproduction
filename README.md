@@ -245,6 +245,36 @@ at least within the context of these datasets and metrics.
 
 ## Future Work
 
+There are many directions for further exploration. Here are a few, which may be
+undertaken if time permits.
+
+1.  Finish evaluating and analyzing the Winogender dataset 🙂
+1.  Refine the completion parameters used while evaluating the datasets. A
+    temperature of 0 is helpful when one wants the model's best answer to a
+    single prompt. But when evaluating many samples, it may skew the results by
+    amplifying the probability of the most likely next token. Relatedly, the
+    small token limit may at times have cut off the completion prematurely
+    before the model could finish answering. Anecdotally, this seemed
+    especially true for the law school admission dataset with the chain of
+    thought prompt, where the model often started to repeat the last sentence
+    of the prompt instead of jumping straight to the answer.
+1.  Analyze the model's responses according to other metrics, for instance
+    other ways of measuring bias. It would also be interesting to understand
+    how these prompt styles affect accuracy. While minimizing bias in LLM
+    output is an important ongoing effort within the field, advances need to be
+    balanced against capabilities in order to be widely adopted. A model which
+    always replies to any prompt with "abc" would score very favorably
+    according to the metrics above. But it would be entirely useless. While I'd
+    argue that the field should devote many more resources to alignment and
+    safety research than it does today, it would also be unwise to neglect
+    capabilities completely.
+1.  Experiment with other prompt styles. Prompt engineering is a active
+    sub-field which is frequently uncovering new and often surprising
+    discoveries about how prompts affect models' outputs. Ganguli et al. admit
+    that they did not systematically explore this area in their study [X].
+    There may be further insights to be gained by tweaking the prompt styles
+    above or investigating alternative ones.
+
 ## References
 
 Copyright &copy; 2023 Robert Gambee
