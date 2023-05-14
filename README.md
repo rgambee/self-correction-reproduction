@@ -201,6 +201,11 @@ little effect on the model's answers.
 
 ## Results
 
+Below are selected results from this study compared to those of the original.
+For the original study, only the results for the largest model with the most
+RLHF fine tuning are included, since that model is the closest match to the one
+used by this study.
+
 ### BBQ Bias
 
 ![Plot of the BBQ bias score in ambiguous contexts for three different prompt styles, comparing this study's findings to those of the original paper](/results/bbq-bias-score.svg)
@@ -212,6 +217,31 @@ little effect on the model's answers.
 ### Winogender Gender Bias
 
 In progress...
+
+## Conclusions
+
+In the original study, Ganguli et al. found that adding debiasing instructions
+and chain of thought reasoning to the prompt progressively decreased the bias
+score for the BBQ dataset and the correlation coefficient for the Windogender
+dataset. The same prompt modifications also increased preference for Black
+students in the law school admission dataset.
+
+In contrast, this study found that the prompt style had relatively little
+impact according to these metrics. The larger difference was between the
+original study's results and this one's, with this study finding much smaller
+bias scores for the BBQ dataset and a much greater preference for Black
+students in the law school admission dataset.
+
+What systematic discrepancies between this study and the original would explain
+this? The nature of the RHLF fine tuning stands out as a likely culprit: the
+models used in the original study likely received different RLHF training of a
+different nature and degree compared to GPT-3.5. And Ganguli et al. found that
+the number of RLHF steps had a noticeable effect on the BBQ bias score and law
+school discrimination metrics [X]. Thus it stands to reason that fine tuning on
+a different RLHF dataset, potentially for more steps, could explain the gap
+between the original models and GPT-3.5. If this hypothesis is true, it
+indicates that RLHF fine tuning is a more important factor than prompt style,
+at least within the context of these datasets and metrics.
 
 ## Future Work
 
