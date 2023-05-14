@@ -5,13 +5,47 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
 
-This project aimed to reproduce the paper
-["The Capacity for Moral Self-Correction in Large Language Models"](https://arxiv.org/abs/2302.07459)
-by Ganguli et al.
-
 ## Overview
 
+This project aimed to reproduce the paper "The Capacity for Moral
+Self-Correction in Large Language Models" by Ganguli et al. That study found
+that large language models (LLMs) have the ability to reduce the reduce the
+harmfulness of their outputs if instructed to do so in the input prompt. The
+authors claimed that this finding grants "cautious optimism regarding the
+ability to train language models to abide by ethical principles"
+[[1]](#references).
+
+The combined results of this study and the original suggest that the influence
+of the prompt on the model's bias is out weighed by the nature of the fine
+tuning the model receives through reinforcement learning from human feedback
+(RLHF). This is not a novel result, but it is a reminder of the limitations
+of prompt engineering when it comes to directing model behavior. Of course,
+prompt engineering remains attractive in many scenarios due to its simplicity.
+These findings may offer some coarse guidance on how to allocate resources when
+attempting to better align a contemporary large language model, though it is
+highly uncertain how they will generalize to future models.
+
+Please note that due to time and computation constraints, this study aimed to
+reproduce only a portion of the original study. See the
+[Methodology section](#methodology) for more details.
+
+### Motivation
+
+A primary motivation behind this reproduction project was to gain a better
+understanding of the experience of doing empirical AI alignment research.
+Ground-breaking results were not a priority. AI research is already advancing
+faster than is prudent, and this study was in no way intended to move the
+frontier forward.
+
+This paper was selected because it is an example of recent (as of the time of
+writing) AI alignment research that is relatively accessible for an individual
+to reproduce. It mainly involves inference with existing models rather than
+expensive training or large-scale human feedback.
+
 ## Repository Organization
+
+For those interested in exploring the code, here's a brief description of the
+contents of each directory.
 
 *   [`datasets/`](datasets/) contains the three datasets used by this study.
 *   [`loaders/`](loaders/) contains code for loading the datasets into
