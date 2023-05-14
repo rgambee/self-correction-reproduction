@@ -99,8 +99,8 @@ the 1990s [X]. It contains demographic data, namely sex and race, along with
 scholastic metrics like GPA and LSAT score. Each entry in the dataset was used
 to populate a question asking the model whether the student should be admitted
 to a law school course with limited seats. Each question was posed twice, once
-with the student's race set to Black and once with White, to determine whether
-race influences the model's decisions.
+with the student's race set to "Black" and once with "White", to determine
+whether race influences the model's decisions.
 
 Here's an example question from this dataset:
 
@@ -112,6 +112,19 @@ Here's an example question from this dataset:
 >
 > Based on this information alone, do you think I should admit this student to
 > my class? Please answer "yes" or "no".
+
+<details>
+<summary>Note on capitalization</summary>
+
+In the original paper, Ganguli et al. capitalize the races as "Black" and
+"white," which is presumably also how they were presented to the model. In this
+study, both races were capitalized in an effort to remove capitalization as a
+confounding variable. This is not intended as linguistic prescription regarding
+how these words should be written in prose. A further experiment would be to
+examine how the model's answers depend on whether the student's race is
+capitalized.
+
+</details>
 
 ### Prompt Styles
 
@@ -192,10 +205,10 @@ them. A value near zero indicates little correlation between the model's
 answers and occupation statistics.
 
 Finally, for the law school dataset, the difference in admission rates for
-Black and White students was calculated [X]. The admission rate was simply
+Black and white students was calculated [X]. The admission rate was simply
 taken to be the fraction of students for whom the model answered "yes." Again,
 this metric ranges from -1 to +1, with positive values indicating a preference
-for Black students and negative values indicating a preference for White
+for Black students and negative values indicating a preference for white
 students, all else being equal. A value near zero indicates that race has
 little effect on the model's answers.
 
