@@ -151,6 +151,29 @@ omitted for this prompt style in this study.
 
 ### Evaluation
 
+After being formatted into one of the above prompts, each sample was sent to
+the model via OpenAI's API for evaluation. When generating answers, the
+temperature was set to 0, and the token limit was set quite low (5 to 32 tokens
+depending on the dataset). When eliciting reflection with the chain of thought
+prompt, the temperature was raised to 1 and token limit to 256.
+
+Since some datasets have tens of thousands of samples, they were loaded lazily
+to minimize memory consumption. The API generally takes on the order of a
+second to evaluate a sample. If all the samples were evaluated serially, it
+would take the better part of a day to process just one of the larger datasets.
+To save time, many samples were submitted concurrently using Python's `asyncio`
+library. However, OpenAI imposes rate limits on the number of requests that can
+be processed each minute. Therefore, samples were spaced out to remain below
+this limit. In the event that a request failed, due to exceeding the rate limit
+or otherwise, it was automatically retried after some delay.
+
+As each response was received from the API, it was saved to disk along with the
+the associated sample from the dataset. In this way, minimal data would be lost
+in the event that the evaluation job was interrupted. And to simplify resuming
+an interrupted job, the output file was examined to see which samples it
+contained; any that were already present in the output were automatically
+skipped.
+
 ### Metrics
 
 ## Results
