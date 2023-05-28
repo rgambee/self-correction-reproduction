@@ -156,7 +156,7 @@ async def main() -> None:
     prompt_funcs = PROMPTS[args.prompt]
 
     if prompts.prompt_match_stats in prompt_funcs:
-        if not isinstance(loader, WinogenderLoader):
+        if args.dataset != WinogenderLoader.dataset:
             raise ValueError(
                 "match-stats prompt is only compatible with winogender dataset"
             )
