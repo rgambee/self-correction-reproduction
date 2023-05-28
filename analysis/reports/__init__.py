@@ -2,7 +2,7 @@ import argparse
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator, List, Sequence, Type
+from typing import Iterable, List, Sequence, Type
 
 import jsonlines
 
@@ -46,14 +46,23 @@ def parse_args() -> UserArguments:
     return UserArguments(**vars(args))
 
 
-# This function uses PascalCase for one of its parameters since it refers to a class,
-# rather than a particular instance.
-# pylint: disable-next=invalid-name
-def load_results(path: Path, ParameterClass: Type[P]) -> Iterator[Result[P]]:
+def load_results(
+    path: Path,
+    # This function uses PascalCase for one of its parameters since it refers to a
+    # class, rather than a particular instance.
+    # pylint: disable-next=invalid-name
+    ParameterClass: Type[P],
+    split_completions: bool = True,
+) -> Iterable[Result[P]]:
     """Load results from a JSONL file
 
     ParameterClass should be the dataclass that corresponds to the samples of this
     dataset, e.g. BBQParameters if these results were generated with the BBQ dataset.
+
+    If split_completions is True, any Result objects which contain multiple completions
+    are turned into separate Results, each with one completion. In otherwords, rather
+    than yielding one Result with N completions, yield N Results each with one
+    completion.
     """
     logger = logging.getLogger(__name__)
     with jsonlines.open(path) as reader:
@@ -70,10 +79,15 @@ def load_results(path: Path, ParameterClass: Type[P]) -> Iterator[Result[P]]:
                 for compl in entry["reply"]["choices"]:
                     compl["message"] = Message(**compl["message"])
                     completions.append(Completion(**compl))
-                entry["reply"]["choices"] = completions
-                reply = Reply(**entry["reply"])
-                yield Result(
-                    sample=sample, prompt_messages=prompt_messages, reply=reply
-                )
+                completions_per_request: Iterable[List[Completion]] = [completions]
+                if split_completions:
+                    completions_per_request = ([compl] for compl in completions)
+
+                for compls in completions_per_request:
+                    entry["reply"]["choices"] = compls
+                    reply = Reply(**entry["reply"])
+                    yield Result(
+                        sample=sample, prompt_messages=prompt_messages, reply=reply
+                    )
             except KeyError as err:
                 logger.debug("Skipping entry due to error: %r", err)
