@@ -1,16 +1,11 @@
 import asyncio
-import json
 import logging
-from dataclasses import asdict, is_dataclass
-from enum import Enum
-from functools import partial
 from pathlib import Path
 
 # Import monotonic() on its own so that it can be mocked during testing
 from time import monotonic
-from typing import Any, Callable, Container, Iterable
+from typing import Callable, Container, Iterable
 
-import jsonlines
 import openai
 
 from eval.request import Request, RequestParameters
@@ -147,22 +142,10 @@ async def save_results_to_file(
     This coroutine runs until it is canceled.
     """
     logger = logging.getLogger(__name__)
-    with jsonlines.open(
-        results_file,
-        mode="a",
-        dumps=partial(json.dumps, default=to_json_serializable_type),
-    ) as output:
+    with open(results_file, mode="a", encoding="utf-8") as output:
         while True:
             result = await results_queue.get()
-            output.write(result)
+            output.write(result.json_dumps())
+            output.write("\n")
             logger.debug("Saved result for sample %d", result.sample.id)
             results_queue.task_done()
-
-
-def to_json_serializable_type(value: Any) -> Any:
-    """Convert a value to a JSON-serializable type"""
-    if is_dataclass(value):
-        return asdict(value)
-    if isinstance(value, Enum):
-        return value.value
-    raise TypeError(f"Object of type {type(value)} is not JSON serializable")

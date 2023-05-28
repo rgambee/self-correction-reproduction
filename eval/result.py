@@ -1,6 +1,8 @@
+import json
 from collections import abc
-from dataclasses import dataclass, fields
-from typing import Any, Generic, Mapping, Sequence, Type, TypeVar
+from dataclasses import asdict, dataclass, fields, is_dataclass
+from enum import Enum
+from typing import Any, Generic, Mapping, Sequence, Tuple, Type, TypeVar
 
 from loaders import P, Sample
 from prompts.message import Message, Messages
@@ -56,6 +58,19 @@ class Result(Generic[P]):
     prompt_messages: Messages
     reply: Reply
 
+    def json_dumps(
+        self,
+        separators: Tuple[str, str] = (",", ":"),
+        **kwargs: Any,
+    ) -> str:
+        """Convert to a compact JSON represenation"""
+        return json.dumps(
+            self,
+            default=to_json_serializable_type,
+            separators=separators,
+            **kwargs,
+        )
+
 
 T = TypeVar("T")
 
@@ -71,3 +86,12 @@ def dataclass_from_mapping_or_iterable(cls: Type[T], value: Any) -> T:
     except TypeError as err:
         raise TypeError(f"Can't convert {value} to {cls}") from err
     return cls(*value)
+
+
+def to_json_serializable_type(value: Any) -> Any:
+    """Convert a value to a JSON-serializable type"""
+    if is_dataclass(value):
+        return asdict(value)
+    if isinstance(value, Enum):
+        return value.value
+    raise TypeError(f"Object of type {type(value)} is not JSON serializable")
