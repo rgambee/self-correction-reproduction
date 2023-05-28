@@ -19,6 +19,10 @@ from loaders import P, Sample
 from prompts.message import Messages
 
 
+class RequestError(Exception):
+    pass
+
+
 # pylint: disable-next=too-many-arguments
 async def process_samples(
     samples: Iterable[Sample[P]],
@@ -70,6 +74,7 @@ async def process_requests(
     requests_queue: asyncio.Queue[Request[P]],
     results_queue: asyncio.Queue[Result[P]],
     rate_limit_sleep: float = 10.0,
+    max_attempts: int = 10,
 ) -> None:
     """Submit requests to the OpenAI API
 
@@ -84,30 +89,32 @@ async def process_requests(
     while True:
         request = await requests_queue.get()
         logger.debug("Submitting request for sample %d", request.sample.id)
-        try:
-            reply = await request.submit()
-        except openai.error.RateLimitError:
-            logger.warning("Rate limit exceeded, sleeping before retrying...")
-            await requests_queue.put(request)
-            await asyncio.sleep(rate_limit_sleep)
-            continue
-        except openai.error.APIError as err:
-            if 500 <= err.http_status < 600:
-                logger.debug("Encountered server error:")
-                logger.debug("    %s", err.http_body)
-                logger.debug("Retrying...")
-                await requests_queue.put(request)
+        for _ in range(max_attempts):  # Retry loop in the event of an error
+            try:
+                reply = await request.submit()
+            except openai.error.RateLimitError:
+                logger.warning("Rate limit exceeded, sleeping before retrying...")
+                await asyncio.sleep(rate_limit_sleep)
                 continue
-            raise
+            except openai.error.APIError as err:
+                if 500 <= err.http_status < 600:
+                    logger.debug("Encountered server error:")
+                    logger.debug("    %s", err.http_body)
+                    logger.debug("Retrying...")
+                    continue
+                raise
+            else:
+                break
         else:
-            await results_queue.put(
-                Result(
-                    sample=request.sample,
-                    prompt_messages=request.messages,
-                    reply=reply,
-                )
+            raise RequestError(f"Retry count exceeded for sample {request.sample.id}")
+        await results_queue.put(
+            Result(
+                sample=request.sample,
+                prompt_messages=request.messages,
+                reply=reply,
             )
-            requests_queue.task_done()
+        )
+        requests_queue.task_done()
 
 
 async def process_intermediate_results(
