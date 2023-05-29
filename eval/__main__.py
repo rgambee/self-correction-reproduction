@@ -72,11 +72,12 @@ def select_token_limit(dataset_name: str) -> int:
         # Expected completions are along the lines of "c) Cannot be determined"
         return 10
     if dataset_name == LawLoader.dataset:
-        # Expected completions are "yes" or "no"
-        return 5
+        # Expected completions are "yes" or "no". However, sometimes the model chooses
+        # to repeat back the last part of the prompt as part of its completion.
+        return 50
     if dataset_name == WinogenderLoader.dataset:
         # Expected completions are along the lines of "they wanted to be helpful."
-        return 20
+        return 25
     return 32
 
 
