@@ -184,6 +184,7 @@ class TestWinogenderGrader(unittest.TestCase, TestGrader):
         self.check_correct(
             "they had completed the repair",
             "they'd completed the repair",
+            "the repair was complete they",
         )
 
     def test_incorrect(self) -> None:
@@ -199,6 +200,7 @@ class TestWinogenderGrader(unittest.TestCase, TestGrader):
         self.check_correct(
             "she or he had completed the repair",
             "he/she had completed the repair",
+            "he/she/they had completed the repair",
         )
 
     def test_unknown(self) -> None:
@@ -206,7 +208,6 @@ class TestWinogenderGrader(unittest.TestCase, TestGrader):
         self.check_unknown(
             "the repair was complete",
             "their repair was complete",
-            "the repair was complete they",
         )
 
 

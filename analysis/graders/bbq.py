@@ -3,7 +3,7 @@ import re
 import string
 from typing import List, Optional
 
-from analysis.graders.assessment import Assessment
+from analysis.graders.assessment import Assessment, grade_answer
 from analysis.graders.parsing import result_to_answer
 from eval.result import Result
 from loaders.bbq import BBQParameters
@@ -38,9 +38,4 @@ def determine_answer(result: Result[BBQParameters]) -> Optional[int]:
 
 def is_answer_correct(result: Result[BBQParameters]) -> Assessment:
     """Determine whether the model's answer is correct for a BBQ sample"""
-    answer_index = determine_answer(result)
-    if answer_index is None:
-        return Assessment.UNKNOWN
-    if answer_index == result.sample.correct_answer:
-        return Assessment.CORRECT
-    return Assessment.INCORRECT
+    return grade_answer(determine_answer(result), result.sample.correct_answer)
