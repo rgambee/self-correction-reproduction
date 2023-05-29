@@ -3,7 +3,7 @@ import argparse
 import asyncio
 import logging
 from dataclasses import replace
-from itertools import chain
+from itertools import chain, repeat
 from pathlib import Path
 from typing import Any, Iterable, List
 
@@ -138,6 +138,18 @@ async def main() -> None:
         help="Timeout in seconds API requests (default: 30)",
     )
     parser.add_argument(
+        "--sample-repeats",
+        type=int,
+        default=1,
+        help="Number of times to submit each sample (default: 1)",
+    )
+    parser.add_argument(
+        "--num-completions",
+        type=int,
+        default=1,
+        help="Number of completions per request (default: 1)",
+    )
+    parser.add_argument(
         "--workers",
         type=int,
         default=16,
@@ -153,6 +165,7 @@ async def main() -> None:
 
     configure_logging(args.verbose)
     loader = load_dataset(args.dataset)
+    samples = (rep for samp in loader for rep in repeat(samp, args.sample_repeats))
     prompt_funcs = PROMPTS[args.prompt]
 
     if prompts.prompt_match_stats in prompt_funcs:
@@ -168,6 +181,7 @@ async def main() -> None:
         max_tokens=args.max_tokens,
         temperature=args.temperature,
         timeout=args.request_timeout,
+        n=args.num_completions,
     )
     args.output_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -181,7 +195,7 @@ async def main() -> None:
         cycles.append(Cycle(prompt_func=prompt_func, parameters=params))
 
     await evaluate_dataset(
-        samples=loader,
+        samples=samples,
         cycles=cycles,
         results_file=args.output_file,
         max_requests_per_min=args.request_rate_limit,

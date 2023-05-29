@@ -14,6 +14,10 @@ class RequestParameters:
     max_tokens: int
     temperature: float
     timeout: Optional[float] = None
+    # OpenAI's API uses `n` for the number of completions to return for each request.
+    # Not the clearest parameter name, as Pylint notices.
+    # pylint: disable-next=invalid-name
+    n: int = 1
 
 
 @dataclass
