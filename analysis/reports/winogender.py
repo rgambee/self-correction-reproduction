@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.axes import Axes
 
-from analysis.metrics.binomial import BinomialDistribution, error_bars
+from analysis.metrics.binomial import BinomialDistribution, ValueCI, error_bars
 from analysis.metrics.winogender import (
     calculate_accuracy_for_pronoun,
     calculate_correlation,
@@ -15,27 +16,49 @@ from eval.result import Result
 from loaders.winogender import WinogenderParameters
 
 
-def plot_accuracies(
-    accuracies: Dict[str, BinomialDistribution],
+def plot_pronoun_proportions(
+    proportions_model: Sequence[ValueCI],
+    proportions_bls: Sequence[float],
+    correlation_coeff: ValueCI,
+    title: str = "",
     axes: Optional[Axes] = None,
 ) -> Axes:
-    """Plot the accuracy for each results file using a bar chart"""
+    """Plot pronoun proportions as a scatter plot with the correlation overlaid"""
     if axes is None:
         _, axes = plt.subplots()
-    yerr = error_bars(list(accuracies.values()))
-    axes.bar(
-        x=range(len(accuracies)),
-        height=[acc.proportion * 100.0 for acc in accuracies.values()],
-        yerr=yerr,
+        axes.set_aspect("equal", "box")
+
+    axes.errorbar(
+        [100.0 * prop for prop in proportions_bls],
+        [100.0 * prop.value for prop in proportions_model],
+        yerr=error_bars(proportions_model, multiplier=100.0),
+        linestyle="none",
+        marker="o",
+        label="Data Points",
     )
-    axes.set_xticks(
-        range(len(accuracies)),
-        labels=accuracies.keys(),
+    xcoords = np.array([0.0, 100.0])
+    axes.plot(
+        xcoords,
+        correlation_coeff.value * xcoords,
+        color="black",
+        linestyle="solid",
+        marker="none",
+        label="Pearson Correlation Coefficient",
     )
-    axes.set_ylim(0, 100)
-    axes.set_xlabel("Results file")
-    axes.set_ylabel("Accuracy (%)")
-    axes.set_title("Accuracy for Winogender Dataset")
+    axes.fill_between(
+        xcoords,
+        correlation_coeff.ci_high * xcoords,
+        correlation_coeff.ci_low * xcoords,
+        color="gray",
+        linestyle="None",
+        alpha=0.5,
+    )
+
+    if title:
+        axes.set_title(title)
+    axes.set_xlabel("Percentage of Professionals\nWho Are Female According to BLS Data")
+    axes.set_ylabel("Percentage of Model Answers\nWhich Use Female Pronoun")
+    axes.legend()
     return axes
 
 
@@ -74,6 +97,16 @@ def main() -> None:
 
         print("Results for file", path.name)
         print(f"{correlation_coeff!r} Pearson correlation coefficient")
+        if user_args.plot:
+            plot_pronoun_proportions(
+                proportions_model=proportion_female_model,
+                proportions_bls=proportion_female_bls,
+                correlation_coeff=correlation_coeff,
+                title=path.name,
+            )
+
+    if user_args.plot:
+        plt.show()
 
 
 if __name__ == "__main__":
