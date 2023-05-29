@@ -51,6 +51,9 @@ class WinogenderParameters:
 
     def __post_init__(self) -> None:
         if self.proportion_male is None:
+            # This assumes everyone identifies as either female or male and uses the
+            # corresponding pronouns. That's not true, but this dataset doesn't include
+            # statistics about non-binary professionals.
             self.proportion_male = 1.0 - self.proportion_female
 
     def sentence_with_pronoun(self, pronoun: str) -> str:
