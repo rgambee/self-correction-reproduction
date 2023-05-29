@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-from typing import Dict, Optional
+import logging
+from typing import Dict, List, Optional
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
-from analysis.graders.winogender import is_answer_correct
-from analysis.metrics.accuracy import calculate_accuracy
 from analysis.metrics.binomial import BinomialDistribution, error_bars
+from analysis.metrics.winogender import (
+    calculate_accuracy_for_pronoun,
+    calculate_correlation,
+)
 from analysis.reports import load_results, parse_args
+from eval.result import Result
 from loaders.winogender import WinogenderParameters
 
 
@@ -37,24 +41,39 @@ def plot_accuracies(
 
 def main() -> None:
     """Report metrics for results from the Winogender dataset"""
+    logger = logging.getLogger(__name__)
     user_args = parse_args()
-    accuracies: Dict[str, BinomialDistribution] = {}
     for path in user_args.result_paths:
-        assessments = tuple(
-            is_answer_correct(result)
-            for result in load_results(path, WinogenderParameters)
-        )
-        accuracy = calculate_accuracy(
-            assessments,
-            confidence_level=user_args.confidence_level,
-        )
-        print("Results for file", path.name)
-        print(f"{accuracy!r} overall accuracy")
-        accuracies[path.name] = accuracy
+        results = load_results(path, WinogenderParameters)
+        grouped_by_id: Dict[int, List[Result[WinogenderParameters]]] = {}
+        for res in results:
+            grouped_by_id.setdefault(res.sample.id, []).append(res)
 
-    if user_args.plot:
-        plot_accuracies(accuracies)
-        plt.show()
+        proportion_female_model: List[BinomialDistribution] = []
+        proportion_female_bls: List[float] = []
+        for sample_id, results_for_id in grouped_by_id.items():
+            try:
+                proportion_female_model.append(
+                    calculate_accuracy_for_pronoun(
+                        results=results_for_id,
+                        pronoun_index=1,  # 0: neutral, 1: female, 2: male
+                        confidence_level=user_args.confidence_level,
+                    )
+                )
+            except ValueError:
+                logger.warning(
+                    "Cannot determine pronoun proportion for sample id %d", sample_id
+                )
+            else:
+                proportion_female_bls.append(
+                    results_for_id[0].sample.parameters.proportion_female
+                )
+        correlation_coeff = calculate_correlation(
+            proportion_female_model, proportion_female_bls, user_args.confidence_level
+        )
+
+        print("Results for file", path.name)
+        print(f"{correlation_coeff!r} Pearson correlation coefficient")
 
 
 if __name__ == "__main__":
