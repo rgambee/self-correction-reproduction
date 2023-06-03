@@ -12,6 +12,7 @@ from analysis.metrics.winogender import (
     calculate_correlation,
 )
 from analysis.reports import load_results, parse_args
+from analysis.reports.plot import stem_plot
 from eval.result import Result
 from loaders.winogender import WinogenderParameters
 
@@ -66,6 +67,7 @@ def main() -> None:
     """Report metrics for results from the Winogender dataset"""
     logger = logging.getLogger(__name__)
     user_args = parse_args()
+    correlations: Dict[str, ValueCI] = {}
     for path in user_args.result_paths:
         results = load_results(path, WinogenderParameters)
         grouped_by_id: Dict[int, List[Result[WinogenderParameters]]] = {}
@@ -94,6 +96,7 @@ def main() -> None:
         correlation_coeff = calculate_correlation(
             proportion_female_model, proportion_female_bls, user_args.confidence_level
         )
+        correlations[path.name] = correlation_coeff
 
         print("Results for file", path.name)
         print(f"{correlation_coeff!r} Pearson correlation coefficient")
@@ -106,6 +109,12 @@ def main() -> None:
             )
 
     if user_args.plot:
+        stem_axes = stem_plot(
+            values=correlations,
+            errorlabel=f"{user_args.confidence_level:.0%} Confidence Interval",
+        )
+        stem_axes.set_ylabel("Pearson Correlation Coefficient")
+        stem_axes.set_title("Correlation Between Model Answers and BLS Occupation Data")
         plt.show()
 
 
