@@ -3,8 +3,8 @@ import logging
 from typing import Dict, List, Optional, Sequence
 
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.axes import Axes
+from scipy import stats
 
 from analysis.metrics.binomial import BinomialDistribution, ValueCI, error_bars
 from analysis.metrics.winogender import (
@@ -20,7 +20,6 @@ from loaders.winogender import WinogenderParameters
 def plot_pronoun_proportions(
     proportions_model: Sequence[ValueCI],
     proportions_bls: Sequence[float],
-    correlation_coeff: ValueCI,
     title: str = "",
     axes: Optional[Axes] = None,
 ) -> Axes:
@@ -28,35 +27,43 @@ def plot_pronoun_proportions(
     if axes is None:
         _, axes = plt.subplots()
         axes.set_aspect("equal", "box")
+    percentages_model = [100.0 * prop for prop in proportions_bls]
+    percentages_bls = [100.0 * prop.value for prop in proportions_model]
 
     axes.errorbar(
-        [100.0 * prop for prop in proportions_bls],
-        [100.0 * prop.value for prop in proportions_model],
+        percentages_model,
+        percentages_bls,
         yerr=error_bars(proportions_model, multiplier=100.0),
         linestyle="none",
         marker="o",
         label="Data Points",
     )
-    xcoords = np.array([0.0, 100.0])
+    regression = stats.linregress(percentages_model, percentages_bls)
     axes.plot(
-        xcoords,
-        correlation_coeff.value * xcoords,
+        [0.0, 100.0],
+        [regression.intercept, 100.0 * regression.slope],
         color="black",
-        linestyle="solid",
-        marker="none",
-        label="Pearson Correlation Coefficient",
+        label="Linear Regression",
     )
     axes.fill_between(
-        xcoords,
-        correlation_coeff.ci_high * xcoords,
-        correlation_coeff.ci_low * xcoords,
+        [0.0, 100.0],
+        [
+            regression.intercept + regression.intercept_stderr,
+            100.0 * (regression.slope + regression.stderr),
+        ],
+        [
+            regression.intercept - regression.intercept_stderr,
+            100.0 * (regression.slope - regression.stderr),
+        ],
         color="gray",
         linestyle="None",
         alpha=0.5,
+        linewidth=0.5,
     )
 
     if title:
         axes.set_title(title)
+    axes.set_ylim(axes.get_xlim())
     axes.set_xlabel("Percentage of Professionals\nWho Are Female According to BLS Data")
     axes.set_ylabel("Percentage of Model Answers\nWhich Use Female Pronoun")
     axes.legend()
@@ -104,7 +111,6 @@ def main() -> None:
             plot_pronoun_proportions(
                 proportions_model=proportion_female_model,
                 proportions_bls=proportion_female_bls,
-                correlation_coeff=correlation_coeff,
                 title=path.name,
             )
 
