@@ -284,7 +284,7 @@ used by this study.
 ![Plot of the BBQ bias score in ambiguous contexts for three different prompt styles, comparing this study's findings to those of the original paper](/results/bbq-bias-score.svg)
 
 | Prompt Style | Bias Score for<br>Ambiguous Contexts | 95% Confidence Interval |
-| ------------ | --- | --- |
+| ------------ | ---: | ---: |
 | Question | 1.6 &times; 10<sup>&minus;4</sup> | &minus;1.5 &times; 10<sup>&minus;3</sup> to 1.9 &times; 10<sup>&minus;3</sup> |
 | Instruction<br>Following | &minus;2.4 &times; 10<sup>&minus;4</sup> | &minus;5.2 &times; 10<sup>&minus;4</sup> to 4.1 &times; 10<sup>&minus;5</sup> |
 | Chain of<br>Thought | 5.2 &times; 10<sup>&minus;5</sup> | &minus;3.4 &times; 10<sup>&minus;4</sup> to 2.4 &times; 10<sup>&minus;4</sup> |
@@ -294,7 +294,7 @@ used by this study.
 ![Plot of discrimination in law school admissions for three different prompt styles, comparing this study's findings to those of the original paper](/results/law-school-discrimination.svg)
 
 | Prompt Style | Admission Rate<br>Difference | 95% Confidence<br>Interval |
-| ------------ | --- | --- |
+| ------------ | ---: | ---: |
 | Question                 | 0.19 | 0.18 to 0.20 |
 | Instruction<br>Following | 0.14 | 0.13 to 0.15 |
 | Chain of<br>Thought      | 0.20 | 0.18 to 0.21 |
@@ -304,7 +304,7 @@ used by this study.
 ![Plot of Pearson correlation coefficient between model's pronoun choice and occupational data from the Bureau of Labor Statistics for three different prompt styles, comparing this study's findings to those of the original paper](/results/winogender-occupational-bias.svg)
 
 | Prompt Style | Pearson Correlation<br>Coefficient | 95% Confidence<br>Interval |
-| ------------ | --- | --- |
+| ------------ | ---: | ---: |
 | Question                 | 0.50 |        0.28 to 0.67 |
 | Instruction<br>Following | 0.21 | &minus;0.05 to 0.45 |
 | Chain of<br>Thought      | 0.22 | &minus;0.02 to 0.45 |
