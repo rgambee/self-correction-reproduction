@@ -5,3 +5,4 @@
 # Ignore data files
 *.jsonl
 *.csv
+*.gz
