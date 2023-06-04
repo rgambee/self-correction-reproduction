@@ -403,9 +403,9 @@ undertaken if time permits.
     output is an important ongoing effort within the field, advances need to be
     balanced against capabilities in order to be widely adopted. A model which
     always replies to any prompt with "abc" would score very favorably
-    according to the metrics above. But it would be entirely useless. While I'd
-    argue that the field should devote many more resources to alignment and
-    safety research than it does today, it would also be unwise to neglect
+    according to the metrics above. But it would be entirely useless. While I
+    would argue that the field should devote many more resources to alignment
+    and safety research than it does today, it would also be unwise to neglect
     capabilities completely.
 1.  Experiment with other prompt styles. Prompt engineering is a active
     sub-field which is frequently uncovering new and often surprising
